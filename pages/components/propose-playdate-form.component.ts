@@ -10,10 +10,12 @@ export class ProposePlaydateFormComponent {
   readonly locationNote: Locator;
   readonly optionalNote: Locator;
   readonly submitButton: Locator;
+  readonly matchedSlots: Locator;
 
   constructor(page: Page) {
     this.submitButton = page.getByRole('button', { name: 'Send request', exact: true });
     this.root = this.submitButton.locator('..');
+    this.matchedSlots = this.root.getByRole('button').filter({ hasNotText: 'Send request' });
     this.place = this.root.getByRole('combobox').filter({
       has: page.getByRole('option', { name: 'Out / neutral place', exact: true }),
     });
@@ -71,6 +73,16 @@ export class ProposePlaydateFormComponent {
   /** Matched-slot button whose accessible name is this label. */
   matchedSlot(name: string): Locator {
     return this.root.getByRole('button', { name, exact: true });
+  }
+
+  /** Matched-slot buttons whose accessible name includes this text. */
+  matchedSlotContaining(text: string): Locator {
+    return this.root.getByRole('button', { name: text });
+  }
+
+  /** Chooses the first live matched slot (accessible names change as dates roll). */
+  async selectFirstMatchedSlot(): Promise<void> {
+    await this.matchedSlots.first().click();
   }
 
   /** Selects a child checkbox in the propose form. */
