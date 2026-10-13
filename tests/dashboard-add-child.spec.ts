@@ -1,4 +1,4 @@
-import { DashboardPage } from '../pages';
+import { DashboardPage } from '../pages/dashboard.page';
 import { buildChildFirstName } from '../test-data/factories/child.factory';
 import { expect, test } from '../fixtures/cleanup.fixture';
 
