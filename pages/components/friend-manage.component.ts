@@ -12,7 +12,7 @@ export class FriendManageComponent {
     this.root = this.cancelButton.locator('..');
     this.reportButton = this.root.getByRole('button', { name: 'report', exact: true });
     this.blockButton = this.root.getByRole('button', { name: 'block', exact: true });
-    this.removeButton = this.root.getByRole('button', { name: 'remove', exact: true });
+    this.removeButton = this.root.getByRole('button', { name: 'delete', exact: true });
   }
 
   /** Reports the friendship from the open manage actions. */
