@@ -1,5 +1,5 @@
 {
-  "name": "agentic-qa-practicum1",
+  "name": "agentic-qa-practicum",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aprocopov-gif/agentic-qa-practicum1.git"
+    "url": "git+https://github.com/aprocopov-gif/agentic-qa-practicum.git"
   },
   "keywords": [],
   "author": "",
@@ -21,9 +21,9 @@
   "description": "",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/aprocopov-gif/agentic-qa-practicum1/issues"
+    "url": "https://github.com/aprocopov-gif/agentic-qa-practicum/issues"
   },
-  "homepage": "https://github.com/aprocopov-gif/agentic-qa-practicum1#readme",
+  "homepage": "https://github.com/aprocopov-gif/agentic-qa-practicum#readme",
   "devDependencies": {
     "@playwright/test": "^1.63.0"
   },

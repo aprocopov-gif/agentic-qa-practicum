@@ -1,4 +1,4 @@
-BuddyTime test site (`APP_URL`). Routes match `AppRoute` in the practicum repo (`test-data/routes.ts`) and the Anna route → page object map.
+BuddyTime test site (`APP_URL`). Routes match `AppRoute` in the practicum repo (`test-data/routes.ts`) and the P7 route → page object map.
 
 **Families involved:** *One* = a single logged-in family can use alone; *Two* = designed for interaction between two or more families.
 
@@ -29,7 +29,7 @@ BuddyTime test site (`APP_URL`). Routes match `AppRoute` in the practicum repo (
 | Friends: trusted circle family cards | `/friends` | Two |  |  |  |
 | Friends: Invite a family | `/friends` | Two |  |  |  |
 | Friends: Schedule Playdate (per family) | `/friends` | Two |  |  |  |
-| Friends: Manage connection (report, block, remove, cancel) | `/friends` | Two |  |  |  |
+| Friends: Manage connection (report, block, remove, cancel) | `/friends` | Two | Anna | [AQPBT-14](https://legionqaschool.atlassian.net/browse/AQPBT-14) |  |
 | Friends: Discover families → Explore Communities | `/friends` → `/communities` | One |  |  |  |
 | Communities: list your groups | `/communities` | One |  |  |  |
 | Communities: create group | `/communities/new` | One | Elena Kombarov | [AQPBT-3](https://legionqaschool.atlassian.net/browse/AQPBT-3) | [\[Elena Kombarov\] Communities: create group](https://legionqaschool.atlassian.net/wiki/spaces/AQPBT/pages/307593217/Elena+Kombarov+Communities+create+group) |
