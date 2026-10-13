@@ -1,0 +1,114 @@
+name: Test generation
+
+on:
+  schedule:
+    # Weekdays 9:00 AM EST (14:00 UTC)
+    - cron: '0 14 * * 1-5'
+  workflow_dispatch:
+
+concurrency:
+  group: test-generation
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  backlog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      APP_URL: ${{ secrets.APP_URL }}
+      APP_USER_EMAIL: ${{ secrets.APP_USER_EMAIL }}
+      APP_USER_PASSWORD: ${{ secrets.APP_USER_PASSWORD }}
+      APP_ALT_USER_EMAIL: ${{ secrets.APP_ALT_USER_EMAIL }}
+      APP_ALT_USER_PASSWORD: ${{ secrets.APP_ALT_USER_PASSWORD }}
+      ATLASSIAN_BASE_URL: ${{ secrets.ATLASSIAN_BASE_URL }}
+      ATLASSIAN_EMAIL: ${{ secrets.ATLASSIAN_EMAIL }}
+      JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+      CONFLUENCE_SPACE_KEY: ${{ secrets.CONFLUENCE_SPACE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Verify required configuration
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          ATLASSIAN_API_TOKEN: ${{ secrets.ATLASSIAN_API_TOKEN }}
+          CURSOR_GH_MCP: ${{ secrets.CURSOR_GH_MCP }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for var in \
+            APP_URL APP_USER_EMAIL APP_USER_PASSWORD \
+            APP_ALT_USER_EMAIL APP_ALT_USER_PASSWORD \
+            ATLASSIAN_BASE_URL ATLASSIAN_EMAIL JIRA_PROJECT_KEY CONFLUENCE_SPACE_KEY \
+            CURSOR_API_KEY ATLASSIAN_API_TOKEN CURSOR_GH_MCP
+          do
+            if [ -z "${!var:-}" ]; then
+              echo "::error title=Missing secret::Set repository secret ${var}"
+              missing=$((missing + 1))
+            fi
+          done
+          if [ "$missing" -gt 0 ]; then
+            exit 1
+          fi
+          echo "All required secrets are present (values not logged)."
+
+      - name: Run backlog QA orchestrator
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          ATLASSIAN_API_TOKEN: ${{ secrets.ATLASSIAN_API_TOKEN }}
+          CURSOR_GH_MCP: ${{ secrets.CURSOR_GH_MCP }}
+        run: |
+          agent -p --force --trust --output-format text "$(cat <<-'EOF'
+          You are the QA orchestrator in **Backlog mode**. Treat `.cursor/rules/qa-orchestrator.mdc` as authoritative; follow it completely for this run.
+          ## Queue (Backlog mode)
+          - Jira project: `JIRA_PROJECT_KEY` (from env).
+          - Select **at most one** issue: status **In QA**, label `tests-generated` absent.
+          - If the queue is empty, stop with a short summary and do **not** open a PR or commit.
+          ## Per ticket (same routing as orchestrator “With ticket”)
+          1. **Analyze** — Apply `.cursor/skills/jira-ticket-analyzer/SKILL.md`: read the ticket (all AC) and linked Confluence page in `CONFLUENCE_SPACE_KEY`. Save the Gherkin plan to `features/<KEY>.feature.md` (e.g. `features/AQPBT-8.feature.md`). Commit this file before implementation.
+          2. **test-writer** — Apply `.cursor/agents/test-writer.md` and `.cursor/rules/playwright-conventions.mdc`, `pom-conventions`, `api-cleanup`: implement **only** from the plan on disk; write under `tests/` and `pages/` (and `test-data/` if needed). Do not skip the plan file.
+          3. **Run** — `npx playwright test` on the new spec (use `--workers=1` when tests mutate shared state).
+          4. **Heal on red** — Always triage first (`.cursor/skills/ci-failure-triage/SKILL.md` / `.cursor/agents/triage.md`). Real app bug → `.cursor/skills/jira-bug-reporter/SKILL.md` (draft only; do not file without human approval). Drift → `.cursor/skills/self-heal/SKILL.md` (POM only). Ambiguous → stop and escalate. Respect loop guards (max delegations/heals/re-runs in orchestrator).
+
+          ## Done (Backlog mode + orchestrator Done)
+          - Apply `.cursor/skills/eval-report/SKILL.md`; commit refreshed `eval-report.md` (or note eval skipped only if the skill says so).
+          - Open **one PR** per processed ticket: body must include **Gherkin plan:** `features/<KEY>.feature.md`, test command, Jira key link. Branch name `tests/<key>-<short-slug>`.
+          - If the spec is green, add Jira label `tests-generated` on the ticket. If red on app bug or hard stop, leave PR open and **do not** add the label.
+          - Never merge, transition, or close tickets or PRs.
+
+          ## Tools
+          - Atlassian: MCP or REST with `ATLASSIAN_*` env.
+          - GitHub: MCP via `CURSOR_GH_MCP` when available; otherwise `gh` with `GITHUB_TOKEN`.
+          ## Write scope
+          Allowed: `features/`, `tests/`, `pages/`, `test-data/`, `eval-report.md`. Do not edit app source or weaken assertions.
+	EOF
+          )"
