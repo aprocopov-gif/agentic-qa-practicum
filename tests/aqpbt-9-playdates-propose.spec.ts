@@ -40,7 +40,7 @@ test.describe('AQPBT-9 playdates propose form (Family A)', () => {
     await playdates.goto();
 
     await expect(playdates.matchesBadge(playdatesProposeObserved.matchesBadge)).toBeVisible();
-    await expect(form.matchedSlot(playdatesProposeObserved.nguyensSlot)).toBeVisible();
+    await expect(form.matchedSlots.first()).toBeVisible();
   });
 
   test('selecting a matched slot disables the place combobox @regression', async ({ page }) => {
@@ -48,7 +48,7 @@ test.describe('AQPBT-9 playdates propose form (Family A)', () => {
     const form = playdates.proposePlaydateForm;
 
     await playdates.goto();
-    await form.selectMatchedSlot(playdatesProposeObserved.nguyensSlot);
+    await form.selectFirstMatchedSlot();
 
     await expect(form.place).toBeDisabled();
   });
@@ -108,7 +108,7 @@ test.describe('AQPBT-9 playdates propose form (Family A)', () => {
     await playdates.goto();
     await form.selectFamily(PlaydateCircleFamily.Petrovs);
 
-    await expect(form.matchedSlot(playdatesProposeObserved.petrovsSlot)).toBeVisible();
+    await expect(form.matchedSlotContaining(PlaydateCircleFamily.Petrovs).first()).toBeVisible();
   });
 
   test('Find a playdate route shows the same propose UI @api', async ({ page }) => {

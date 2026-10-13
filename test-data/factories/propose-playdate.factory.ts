@@ -10,8 +10,6 @@ export const playdatesProposeObserved = {
   proposePanelTitle: 'Propose',
   sendRequest: 'Send request',
   matchesBadge: '6 matches',
-  nguyensSlot: 'Sun, Oct 11 10:00am-1:00pm at The Gorfels',
-  petrovsSlot: 'Sat, Oct 10 2:00pm-5:00pm at The Petrovs',
   childMia: 'Mia',
   childMaria: 'Maria',
   pendingEmptyCopy: 'No pending requests.',

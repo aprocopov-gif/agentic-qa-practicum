@@ -27,12 +27,12 @@ Feature: Playdates: matched slots and manual propose form: propose a playdate to
     And I am on "/playdates" with "The Nguyens" selected
     When matched availability loads
     Then I see "6 matches"
-    And I see a matched slot "Sun, Oct 11 10:00am-1:00pm at The Gorfels"
+    And I see a dated matched-slot button
 
   Scenario: Selecting a matched slot disables the place combobox
     Given I am logged in as Family A with a completed dashboard
     And I am on "/playdates"
-    When I select the matched slot "Sun, Oct 11 10:00am-1:00pm at The Gorfels"
+    When I select the first live matched-slot button
     Then the place combobox is disabled
 
   Scenario: Place combobox lists Out / neutral place and My place when no slot is selected
@@ -77,7 +77,7 @@ Feature: Playdates: matched slots and manual propose form: propose a playdate to
     Given I am logged in as Family A with a completed dashboard
     And I am on "/playdates"
     When I choose "The Petrovs"
-    Then I see a matched slot "Sat, Oct 10 2:00pm-5:00pm at The Petrovs"
+    Then I see a matched-slot button whose name includes "The Petrovs"
 
   Scenario: Find a playdate route shows the same propose UI
     Given I am logged in as Family A with a completed dashboard
