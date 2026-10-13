@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Playwright constitution
 
-Non-negotiables for every task. Details and examples: `playwright-conventions.mdc` (tests) and `qa-orchestrator.mdc` (ticket/CI workflow) — both added later.
+Non-negotiables for every task. Details and examples: `playwright-conventions.mdc` (tests) and `qa-orchestrator.mdc` (ticket/CI workflow).
 
 ## MUST
 
@@ -41,11 +41,31 @@ Non-negotiables for every task. Details and examples: `playwright-conventions.md
 
 ## Index
 
-**Skills** (`.cursor/skills/`): `api-cleanup`, `ci-failure-triage`, `eval-report`, `explore-and-generate`, `exploratory-charter`, `jira-bug-reporter`, `jira-ticket-analyzer`, `playwright-cli`, `pom-conventions`, `self-heal`, `test-data-reset`
+**Skills** (`.cursor/skills/`):
 
-**Agents** (`.cursor/agents/`): *(updated as each artifact is added)*
+| Skill | Role |
+|-------|------|
+| `api-cleanup` | Teardown test data |
+| `ci-failure-triage` | Classify CI failures |
+| `eval-report` | Refresh reliability metrics |
+| `explore-and-generate` | Ticket-less flow discovery |
+| `exploratory-charter` | Session charter format |
+| `jira-bug-reporter` | Draft Jira bugs |
+| `jira-ticket-analyzer` | Ticket to Gherkin |
+| `playwright-cli` | Browser automation CLI |
+| `pom-conventions` | POM structure rules |
+| `self-heal` | Repair locator drift |
+| `test-data-reset` | Delete leftover records |
 
-**Rules** (`.cursor/rules/`): `atlassian-authoring.mdc` — `[Anna]` prefix on Confluence/Jira writes
+**Agents** (`.cursor/agents/`):
+
+| Agent | Role |
+|-------|------|
+| `bug-reporter` | File confirmed bugs |
+| `test-writer` | Plan to Playwright spec |
+| `triage` | Diagnose red runs |
+
+**Rules** (`.cursor/rules/`): `atlassian-authoring.mdc` — `[Anna]` prefix on Confluence/Jira writes; `qa-orchestrator.mdc` — ticket/CI coordinator; `playwright-conventions.mdc` — test authoring
 
 ## Agent governance
 
