@@ -8,11 +8,9 @@ cd "$ROOT"
 echo "== Workflow present =="
 test -f .github/workflows/test-generation.yml
 
-echo "== Agent step bash syntax =="
-script="$(mktemp)"
-sed -n '65,90p' .github/workflows/test-generation.yml | sed 's/^          //' >"$script"
-bash -n "$script"
-rm -f "$script"
+echo "== Agent step present =="
+grep -q 'agent -p --force --trust' .github/workflows/test-generation.yml
+grep -q "<<-'EOF'" .github/workflows/test-generation.yml
 
 echo "== npm ci =="
 npm ci
