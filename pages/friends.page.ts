@@ -31,22 +31,33 @@ export class FriendsPage {
     await this.inviteFamilyButton.click();
   }
 
+  /** Card that shows this circle family name. */
+  familyCard(familyName: string): Locator {
+    return this.page.getByText(familyName, { exact: true }).locator('..');
+  }
+
+  /** Schedule Playdate on the family card that shows this name. */
+  schedulePlaydateButton(familyName: string): Locator {
+    return this.familyCard(familyName).getByRole('button', { name: 'Schedule Playdate', exact: true });
+  }
+
+  /** Manage on the family card that shows this name. */
+  manageButton(familyName: string): Locator {
+    return this.familyCard(familyName).getByRole('button', { name: 'manage', exact: true });
+  }
+
   /** Opens scheduling for the family card that shows this name. */
   async openSchedulePlaydate(familyName: string): Promise<void> {
-    await this.familyCard(familyName).getByRole('button', { name: 'Schedule Playdate', exact: true }).click();
+    await this.schedulePlaydateButton(familyName).click();
   }
 
   /** Opens manage actions for the family card that shows this name. */
   async openManage(familyName: string): Promise<void> {
-    await this.familyCard(familyName).getByRole('button', { name: 'manage', exact: true }).click();
+    await this.manageButton(familyName).click();
   }
 
   /** Closes manage actions without changing the friendship. */
   async cancelManage(): Promise<void> {
     await this.manage.cancel();
-  }
-
-  private familyCard(familyName: string): Locator {
-    return this.page.getByText(familyName, { exact: true }).locator('..');
   }
 }
