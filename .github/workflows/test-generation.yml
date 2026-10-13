@@ -87,7 +87,7 @@ jobs:
           ATLASSIAN_API_TOKEN: ${{ secrets.ATLASSIAN_API_TOKEN }}
           CURSOR_GH_MCP: ${{ secrets.CURSOR_GH_MCP }}
         run: |
-          agent -p --force --trust --output-format text "$(cat <<-'EOF'
+          agent -p --force --trust --output-format text "$(cat <<'EOF'
           You are the QA orchestrator in **Backlog mode**. Treat `.cursor/rules/qa-orchestrator.mdc` as authoritative; follow it completely for this run.
           ## Queue (Backlog mode)
           - Jira project: `JIRA_PROJECT_KEY` (from env).
@@ -110,5 +110,5 @@ jobs:
           - GitHub: MCP via `CURSOR_GH_MCP` when available; otherwise `gh` with `GITHUB_TOKEN`.
           ## Write scope
           Allowed: `features/`, `tests/`, `pages/`, `test-data/`, `eval-report.md`. Do not edit app source or weaken assertions.
-	EOF
+          EOF
           )"
