@@ -89,6 +89,10 @@ export class DashboardPage {
 
   private childCard(firstName: string): Locator {
     const escaped = firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return this.page.getByText(new RegExp(`${escaped}\\s*,\\s*\\d`)).locator('..');
+    const nameLine = new RegExp(`${escaped}\\s*,\\s*\\d`);
+    return this.page
+      .getByRole('button', { name: 'Change avatar', exact: true })
+      .locator('..')
+      .filter({ hasText: nameLine });
   }
 }
