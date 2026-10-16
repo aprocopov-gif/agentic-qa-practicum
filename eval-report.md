@@ -1,29 +1,23 @@
 # Eval report
 
-Window: last 17 `playwright.yml` runs (all that exist; N default 30). Measured 2026-10-12 from `gh run list --workflow=playwright.yml --limit 30` and `gh pr list --state all`.
+**Measured:** 2026-10-16  
+**Window:** last 30 `playwright.yml` runs (30 available)  
+**Sources:** `gh run list --workflow=playwright.yml --limit 30`, `gh pr list --state all --limit 30`, PR/check inspection for heal and generation PRs.
 
-## Metrics
+## Summary
 
-### 1. Flake rate
+| | |
+|--|--|
+| Run outcomes (cancelled excluded from pass/fail) | 21 success · 6 failure · 3 cancelled |
 
-**insufficient data** — GitHub job conclusions do not expose Playwright retry counts (`retries: 2` in CI) without downloading each `playwright-report` artifact. Passing jobs show a single successful “Run Playwright” step. Four red PR runs on `agents-set-up` (38334346811, 38334538741, 38334654256, 38333983042) stayed failed; they were locator/setup defects later fixed by commits, not recovered retries.
+| # | Metric | Result | Scored rate | How measured | Interpretation |
+|---|--------|--------|-------------|--------------|----------------|
+| 1 | Flake rate | insufficient data | — | Tests that passed only on retry ÷ tests in passing runs; needs `playwright-report-*` artifacts (`retries: 2` in CI—not visible in job conclusions alone). No artifacts downloaded this refresh. | Flake rate unknown; cannot judge retry-driven stability yet. |
+| 2 | Heal success rate | insufficient data | — | Heal PRs green on first CI with assertions unchanged ÷ all heal PRs; masked regressions (weakened `expect`) must be 0. Population: merged [#8](https://github.com/aprocopov-gif/agentic-qa-practicum/pull/8), [#9](https://github.com/aprocopov-gif/agentic-qa-practicum/pull/9); final PR **smoke** checks green; hooks saw **0** assertion weakening (full diffs not scanned). | Sample too small for a rate; heals look healthy on final CI but #9 was not POM-only. |
+| 3 | Generation-gate pass rate | insufficient data | — | Ticket-first PRs that are CI green, conforming, and AC-mapped ÷ all ticket-first generation PRs. Population: **1** merged ([#11](https://github.com/aprocopov-gif/agentic-qa-practicum/pull/11)); excludes foundation #1–#5 and drift demos #12–#13. | One merged ticket PR after earlier reds on the same branch—not enough to score pass rate. |
+| 4 | Ask vs guess | qualitative (small sample) | N/A | Review of generation/heal PR text and `features/*.feature.md` (missing Confluence noted in Gherkin; crawl URLs and POM copy cited). No transcript-wide audit. | Plans tend to ask or document gaps rather than invent UI; confidence limited by small sample. |
 
-### 2. Heal success rate
-
-**0 / 0** — no PRs on `heal/*`. Assertion-weakening count in heal PRs: not applicable. Dashboard child-row locator fixes shipped as commits on `agents-set-up` inside [PR #5](https://github.com/aprocopov-gif/agentic-qa-practicum/pull/5), not as dedicated heal PRs.
-
-### 3. Generation-gate pass rate
-
-**0 / 0 prior; first ticket PR in flight** — PRs #1–#5 are foundation, skills, and agent/CI setup, not ticket-first generation. AQPBT-14 (`tests/aqpbt-14-friends-manage`) is the first mapped generation: Gherkin in `features/AQPBT-14.feature.md`, local `npx playwright test tests/aqpbt-14-friends-manage.spec.ts --workers=1` → 8/8 spec + 2 setup passed. CI on that PR is not in this window yet.
-
-### 4. Ask vs guess
-
-This AQPBT-14 session used only ticket, explore crawl, and existing POM strings (`Friends`, `manage`, `report`, `block`, `remove`, `cancel`, `Schedule Playdate`, `The Nguyens`, `The Petrovs`). No Confluence feature page exists in space AQPBT; that gap is listed in the Gherkin comment block instead of filled in. Report/block/remove were not clicked.
-
-## Top reliability risk
-
-Generation-gate and flake rate have no historical sample. Circle families on `/friends` are shared tenant data, not created per test — a missing card would fail the whole AQPBT-14 spec.
-
-## Next action
-
-After AQPBT-14 CI completes, recount generation-gate (1/1 or 0/1) and download one passing report to measure retries for flake rate.
+| | |
+|--|--|
+| **Top reliability risk** | Shared BuddyTime tenant data (fixed circle families, calendar slots)—list and playdate specs can fail from environment drift or missing cards, not only locators. |
+| **Next action** | Download a recent passing `playwright-report-smoke` or `playwright-report-sanity` artifact and count pass-on-retry tests; after the next ticket-first PR, score generation-gate as 1/1 or 0/1 with explicit AC mapping. |

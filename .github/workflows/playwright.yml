@@ -1,13 +1,20 @@
 name: Playwright
 
+# Slice mapping (see .cursor/rules/playwright-conventions.mdc § Tags):
+#   push (main only)     → @sanity  → npm run test:sanity
+#   pull_request         → @smoke   → npm run test:smoke
+#   workflow_dispatch    → full suite → npm test (all projects/tags)
+
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
 jobs:
   test:
-    name: ${{ github.event_name == 'workflow_dispatch' && 'regression' || github.event_name == 'pull_request' && 'smoke' || 'sanity' }}
+    name: ${{ github.event_name == 'workflow_dispatch' && 'full' || github.event_name == 'pull_request' && 'smoke' || 'sanity' }}
     runs-on: ubuntu-latest
     timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 60 || 30 }}
     env:
@@ -46,8 +53,8 @@ jobs:
               echo "slice=smoke" >> "$GITHUB_OUTPUT"
               ;;
             workflow_dispatch)
-              echo "command=npx playwright test" >> "$GITHUB_OUTPUT"
-              echo "slice=regression" >> "$GITHUB_OUTPUT"
+              echo "command=npm test" >> "$GITHUB_OUTPUT"
+              echo "slice=full" >> "$GITHUB_OUTPUT"
               ;;
           esac
 
