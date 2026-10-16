@@ -17,7 +17,7 @@ export class FriendsPage {
     this.manage = new FriendManageComponent(page);
     this.circleInvitePanel = new CircleInvitePanelComponent(page);
     this.title = this.header.banner.getByText('Friends', { exact: true });
-    this.inviteFamilyButton = page.getByRole('button', { name: '+ Invite a family', exact: true });
+    this.inviteFamilyButton = page.getByRole('button', { name: '+ Invite family', exact: true });
     this.exploreCommunitiesLink = page.getByRole('link', { name: 'Explore Communities', exact: true });
   }
 
