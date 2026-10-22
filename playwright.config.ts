@@ -28,9 +28,16 @@ export default defineConfig({
     {
       name: 'app',
       testMatch: '**/*.spec.ts',
+      testIgnore: '**/*.api.spec.ts',
       use: {
         storageState: AUTH_FILE,
       },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'api',
+      testDir: './api',
+      testMatch: '**/*.api.spec.ts',
       dependencies: ['setup'],
     },
   ],
