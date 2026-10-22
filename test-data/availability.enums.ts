@@ -31,7 +31,7 @@ export const AvailabilityCopy = {
   weeklyHeading: 'Set your weekly free time',
   oneOffChanges: 'One-off changes',
   weekendAfternoons: 'Weekend afternoons',
-  saveAvailability: 'Save availabilities',
+  saveAvailability: 'Save availability',
   addException: 'Add exception',
   noSlots: 'No slots',
   invalidWeeklyTimes: 'Start time must be before end time',
