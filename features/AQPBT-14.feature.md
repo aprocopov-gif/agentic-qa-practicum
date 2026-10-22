@@ -74,9 +74,12 @@ Feature: Friends manage connection — report / block / remove stay unclicked; c
     And the family card "The Petrovs" shows "Schedule Playdate" and "manage"
 
 <!--
-Ambiguities / gaps (Jira + no Confluence feature page):
-- No AQPBT-14 page in space AQPBT; labels come from the ticket and
-  features/explore-friends-manage-connection.feature.md live crawl.
+Sources: Jira AQPBT-14; AQPBT Feature map (Confluence); BTQA "3.3 Trusted circle"
+(https://legionqaschool.atlassian.net/wiki/spaces/BTQA/pages/314212354) — Manage connection
+→ Report, Block, Remove, Cancel on `/friends` cards; report/block/remove outcomes not exercised here.
+
+Ambiguities / gaps:
+- No dedicated AQPBT-14 feature page in space AQPBT (only Feature map row + explore Gherkin).
 - Whether "Schedule Playdate" stays visible on the same card while manage is open.
 - Dialog copy, confirmations, and outcomes of report / block / remove (out of scope; do not click).
 - Empty circle, a family with one card only, and Family B / second-family view.
