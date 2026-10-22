@@ -1,10 +1,5 @@
 name: Playwright
 
-# Slice mapping (see .cursor/rules/playwright-conventions.mdc § Tags):
-#   push (main only)     → @sanity  → npm run test:sanity
-#   pull_request         → @smoke   → npm run test:smoke
-#   workflow_dispatch    → full suite → npm test (all projects/tags)
-
 on:
   push:
     branches:
@@ -14,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: ${{ github.event_name == 'workflow_dispatch' && 'full' || github.event_name == 'pull_request' && 'smoke' || 'sanity' }}
+    name: ${{ github.event_name == 'push' && 'sanity' || github.event_name == 'pull_request' && 'smoke' || 'regression' }}
     runs-on: ubuntu-latest
     timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 60 || 30 }}
     env:
@@ -23,15 +18,14 @@ jobs:
       APP_USER_PASSWORD: ${{ secrets.APP_USER_PASSWORD }}
       APP_ALT_USER_EMAIL: ${{ secrets.APP_ALT_USER_EMAIL }}
       APP_ALT_USER_PASSWORD: ${{ secrets.APP_ALT_USER_PASSWORD }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: 20
           cache: npm
 
       - name: Install dependencies
@@ -46,25 +40,25 @@ jobs:
           case "${{ github.event_name }}" in
             push)
               echo "command=npm run test:sanity" >> "$GITHUB_OUTPUT"
-              echo "slice=sanity" >> "$GITHUB_OUTPUT"
+              echo "artifact=sanity" >> "$GITHUB_OUTPUT"
               ;;
             pull_request)
               echo "command=npm run test:smoke" >> "$GITHUB_OUTPUT"
-              echo "slice=smoke" >> "$GITHUB_OUTPUT"
+              echo "artifact=smoke" >> "$GITHUB_OUTPUT"
               ;;
             workflow_dispatch)
-              echo "command=npm test" >> "$GITHUB_OUTPUT"
-              echo "slice=full" >> "$GITHUB_OUTPUT"
+              echo "command=npx playwright test" >> "$GITHUB_OUTPUT"
+              echo "artifact=regression" >> "$GITHUB_OUTPUT"
               ;;
           esac
 
-      - name: Run Playwright
+      - name: Run Playwright tests
         run: ${{ steps.slice.outputs.command }}
 
-      - name: Upload playwright report
+      - name: Upload Playwright report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report-${{ steps.slice.outputs.slice }}
+          name: playwright-report-${{ steps.slice.outputs.artifact }}
           path: playwright-report/
           retention-days: 30

@@ -29,9 +29,6 @@ test.describe('AQPBT-14 friends manage connection (Family A)', () => {
     await expect(friends.title).toBeVisible();
     await expectCardShowsScheduleAndManage(friends, PlaydateCircleFamily.Nguyens);
     await expectCardShowsScheduleAndManage(friends, PlaydateCircleFamily.Petrovs);
-
-    await friends.openManage(PlaydateCircleFamily.Nguyens);
-    await expectManageActionsVisible(friends);
   });
 
   test('Manage on The Nguyens shows report, block, remove, and cancel @sanity', async ({ page }) => {

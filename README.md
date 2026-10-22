@@ -54,11 +54,11 @@ Auth runs once in the `setup` project (`auth.setup.ts`); the `app` project depen
 
 Workflow: [`.github/workflows/playwright.yml`](.github/workflows/playwright.yml)
 
-| GitHub event | Playwright job label | Command |
-|--------------|----------------------|---------|
-| `push` | sanity | `npm run test:sanity` |
-| `pull_request` | smoke | `npm run test:smoke` |
-| `workflow_dispatch` | full | `npm test` (full suite; not the `@regression` grep slice) |
+| GitHub event | Job name | Command | Report artifact |
+|--------------|----------|---------|-----------------|
+| `push` (`main` only) | sanity | `npm run test:sanity` | `playwright-report-sanity` |
+| `pull_request` | smoke | `npm run test:smoke` | `playwright-report-smoke` |
+| `workflow_dispatch` | regression | `npx playwright test` | `playwright-report-regression` |
 
 `push` is limited to **`main`** so PR branch updates run **smoke** only (no duplicate sanity + smoke on the same commit).
 

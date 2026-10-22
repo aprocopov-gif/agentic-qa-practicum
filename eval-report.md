@@ -20,4 +20,4 @@
 | | |
 |--|--|
 | **Top reliability risk** | Shared BuddyTime tenant data (fixed circle families, calendar slots)—list and playdate specs can fail from environment drift or missing cards, not only locators. |
-| **Next action** | Download a recent passing `playwright-report-smoke` or `playwright-report-sanity` artifact and count pass-on-retry tests; after the next ticket-first PR, score generation-gate as 1/1 or 0/1 with explicit AC mapping. |
+| **Next action** | Download a recent passing `playwright-report-smoke`, `playwright-report-sanity`, or `playwright-report-regression` artifact and count pass-on-retry tests; after the next ticket-first PR, score generation-gate as 1/1 or 0/1 with explicit AC mapping. |
