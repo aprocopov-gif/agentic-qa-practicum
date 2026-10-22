@@ -1,0 +1,28 @@
+{
+  "confidence": 0.9,
+  "test": { "file": "specs/sample.spec.ts", "title": "model score sample" },
+  "items": [
+    {
+      "id": "R1",
+      "kind": "failure",
+      "artifact": "failure.log",
+      "line": 1,
+      "excerpt": "Expected locator to be visible"
+    },
+    {
+      "id": "R2",
+      "kind": "test_location",
+      "artifact": "specs/sample.spec.ts",
+      "line": 5,
+      "excerpt": "await expect(page.getByRole"
+    },
+    { "id": "R4", "kind": "rerun" },
+    {
+      "id": "D1",
+      "kind": "snapshot_mismatch",
+      "artifact": "snapshots/diff.txt",
+      "line": 1,
+      "excerpt": "aria-snapshot mismatch detected"
+    }
+  ]
+}

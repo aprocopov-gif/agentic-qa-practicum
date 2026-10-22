@@ -18,13 +18,15 @@ description: Analyzes Playwright test failures, identifies root cause, and creat
 
 - Never file for a test issue or a green run; never include credentials.
 
-## Triage before filing
+## Prerequisite (before draft or MCP create)
 
-| Outcome | Action |
-|---------|--------|
-| Product defect (reproduces manually; AC/Confluence says otherwise) | Draft bug per workflow step 5 |
-| Test drift (UI/copy/locator changed; app behavior matches AC) | Fix the test; do not file |
-| Flake or environment | Stabilize or re-run; file only if reproducible product failure |
+Run `npx tsx scripts/score-evidence.ts --verify-only .test-artifacts/evidence/current.json`. Proceed only when **`decision: act`** and **`side: bug`**, or **`decision: escalate`** with `.test-artifacts/approvals/<decisionId>.json` present. Otherwise stop — do not draft or call `createJiraIssue`.
+
+| Scorer outcome | Action |
+|----------------|--------|
+| act + bug | Draft bug per workflow step 5 |
+| act + drift / inconclusive / escalate without approval | Stop; route to self-heal or gather evidence |
+| Re-run passed (rule 3) | Inconclusive / flaky — do not file |
 
 ## Duplicate search
 

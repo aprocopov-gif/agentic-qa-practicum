@@ -7,7 +7,7 @@ description: Repairs drifted Playwright locators after a UI change — patch the
 
 ## Prerequisite
 
-A completed triage diagnosis classified **test issue (drift)**. If it is a real app bug, missing, or ambiguous → stop and route to bug-reporter.
+Live scorer output from `npx tsx scripts/score-evidence.ts --verify-only .test-artifacts/evidence/current.json` shows **`decision: act`** with **`side: drift`**, or **`decision: escalate`** with a human approval file at `.test-artifacts/approvals/<decisionId>.json`. Any other outcome → stop (do not patch POM).
 
 ## Steps
 
@@ -28,7 +28,7 @@ Use in the heal PR body (and as a handoff when stopping):
 ```markdown
 ## Self-heal
 
-**Triage classification:** test issue (drift)
+**Evidence scorer:** act · drift (or escalate + approval file)
 
 **CI run:** `<run id>`
 

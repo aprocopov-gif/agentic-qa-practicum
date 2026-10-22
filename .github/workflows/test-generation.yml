@@ -1,5 +1,8 @@
 name: Test generation
 
+# Backlog orchestrator only; Playwright slices live in playwright.yml.
+# Schedule is off by default (manual dispatch matches local backlog runs).
+
 on:
   # schedule:
   #   # Weekdays 9:00 AM EST (14:00 UTC)

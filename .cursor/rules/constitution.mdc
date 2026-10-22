@@ -76,12 +76,12 @@ Behavioral only, not hook-enforced. Applies to every non-trivial task (new spec,
 
    ## Proposal
    - **Scope:** files, flows, ticket — what will change and what will not
-   - **Confidence:** 1–10
+   - **Self-assessment (1–10, not a gate):** your read on completeness — does not unlock edits
    - **Rationale:** why this approach; evidence consulted
    - **Unknowns:** gaps, assumptions, or "none"
 
 3. **Edit** — only after the gate allows; the smallest diff that satisfies the scope.
 
-**Confidence gate:** < 5 → stop and ask for missing input; 5–7 → list unknowns and proceed only after human approval; ≥ 8 → proceed and still cite evidence.
+**Red-run actions** are gated by `scripts/score-evidence.ts` (via `.cursor/hooks/` on heal/Jira/PR paths); the self-assessment gates nothing.
 
 Never invent file paths, module names, enum values, repeated UI strings, env var names, credentials, user-facing messages, labels, or API routes. Ask the human or explore the repo or the live app. If `.env.example`, `test-data/`, the ticket, or the live app does not confirm a value, it is an unknown, not a placeholder.

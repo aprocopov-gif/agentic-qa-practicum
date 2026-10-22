@@ -54,15 +54,16 @@ Atlassian MCP (Jira and Confluence), GitHub MCP or `gh`, the terminal (`npx play
 
 ## Heal on red
 
-Always **triage** first.
+Always **triage** first (evidence file + live scorer on `.test-artifacts/evidence/current.json`).
 
-| Classification | Action |
-|----------------|--------|
-| Real app bug | **bug-reporter**; never heal |
-| Drift | **self-heal**: re-discover via accessibility snapshot, patch POM only, re-run green with assertions unchanged, repair PR `heal/<desc>`, never merge |
-| Ambiguous | stop and escalate |
+| Scorer `decision` · `side` | Action |
+|----------------------------|--------|
+| **act** · **drift** | **self-heal**: re-discover via accessibility snapshot, patch POM only, re-run green with assertions unchanged, repair PR `heal/<desc>`, never merge |
+| **act** · **bug** | **bug-reporter** draft; never heal |
+| **escalate** | Show the evidence table (verified / missing / contradictions) and **wait** for a human approval file at `.test-artifacts/approvals/<decisionId>.json` before self-heal or Jira create |
+| **inconclusive** | Stop; list missing or contradicting items from scorer output — do not heal or file |
 
-**Hard stops:** never touch an assertion (guard hooks enforce it); stop if green needs an assertion change or the same locator error persists.
+**Hard stops:** never touch an assertion (guard hooks enforce it); stop if green needs an assertion change or the same locator error persists. Hooks re-run the scorer; never trust a saved decision file or chat label.
 
 ## Backlog mode
 

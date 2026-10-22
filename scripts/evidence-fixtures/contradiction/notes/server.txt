@@ -1,0 +1,1 @@
+Internal server error 500 on GET /api/v1/availability during test run

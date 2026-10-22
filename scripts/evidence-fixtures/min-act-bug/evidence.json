@@ -1,0 +1,34 @@
+{
+  "test": { "file": "specs/bug.spec.ts", "title": "bug reproduction" },
+  "items": [
+    {
+      "id": "R1",
+      "kind": "failure",
+      "artifact": "failure.log",
+      "line": 1,
+      "excerpt": "Expected locator to be visible"
+    },
+    {
+      "id": "R2",
+      "kind": "test_location",
+      "artifact": "specs/bug.spec.ts",
+      "line": 5,
+      "excerpt": "await expect(page.getByRole"
+    },
+    { "id": "R4", "kind": "rerun" },
+    {
+      "id": "B1",
+      "kind": "ac_contradiction",
+      "artifact": "notes/ac.txt",
+      "line": 1,
+      "excerpt": "Acceptance criteria requires"
+    },
+    {
+      "id": "B3",
+      "kind": "control_present",
+      "artifact": "notes/control.txt",
+      "line": 1,
+      "excerpt": "Save availability button"
+    }
+  ]
+}
