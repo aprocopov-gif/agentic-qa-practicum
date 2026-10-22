@@ -1,0 +1,24 @@
+{
+  "required": [
+    { "id": "R1", "kind": "failure" },
+    { "id": "R2", "kind": "test_location" },
+    { "id": "R3", "kind": "pom_location", "requiredWhenSide": "drift" },
+    { "id": "R4", "kind": "rerun" }
+  ],
+  "weighted": [
+    { "id": "D1", "kind": "snapshot_mismatch", "side": "drift", "weight": 40, "oracle": true },
+    { "id": "D4", "kind": "probe_unique", "side": "drift", "weight": 25, "oracle": true },
+    { "id": "D2", "kind": "pom_changed", "side": "drift", "weight": 20 },
+    { "id": "D3", "kind": "locator_error", "side": "drift", "weight": 15 },
+    { "id": "B1", "kind": "ac_contradiction", "side": "bug", "weight": 40, "oracle": true },
+    { "id": "B2", "kind": "server_error", "side": "bug", "weight": 25 },
+    { "id": "B3", "kind": "control_present", "side": "bug", "weight": 20, "oracle": true },
+    { "id": "B4", "kind": "second_context", "side": "bug", "weight": 15 },
+    { "id": "N", "kind": "oracle_neutral", "side": null, "weight": 0 }
+  ],
+  "thresholds": {
+    "act": 60,
+    "escalate": 35,
+    "actRequiresOracleOnSide": true
+  }
+}

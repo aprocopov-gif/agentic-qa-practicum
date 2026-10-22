@@ -1,0 +1,48 @@
+{
+  "test": { "file": "specs/sample.spec.ts", "title": "neutral oracle sample" },
+  "items": [
+    {
+      "id": "R1",
+      "kind": "failure",
+      "artifact": "failure.log",
+      "line": 1,
+      "excerpt": "Expected locator to be visible"
+    },
+    {
+      "id": "R2",
+      "kind": "test_location",
+      "artifact": "specs/sample.spec.ts",
+      "line": 5,
+      "excerpt": "await expect(page.getByRole"
+    },
+    {
+      "id": "R3",
+      "kind": "pom_location",
+      "artifact": "pages/widget.page.ts",
+      "line": 2,
+      "excerpt": "getByRole('button'"
+    },
+    { "id": "R4", "kind": "rerun" },
+    {
+      "id": "N",
+      "kind": "oracle_neutral",
+      "artifact": "notes/neutral.txt",
+      "line": 1,
+      "excerpt": "oracle_neutral note:"
+    },
+    {
+      "id": "D2",
+      "kind": "pom_changed",
+      "artifact": "pages/widget.page.ts",
+      "line": 2,
+      "excerpt": "weekendAfternoonsButton"
+    },
+    {
+      "id": "D3",
+      "kind": "locator_error",
+      "artifact": "pages/widget.page.ts",
+      "line": 3,
+      "excerpt": "Save availability"
+    }
+  ]
+}

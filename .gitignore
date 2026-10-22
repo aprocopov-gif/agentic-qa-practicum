@@ -1,4 +1,5 @@
 node_modules/
+__pycache__/
 playwright/.auth/
 .test-artifacts/
 test-results/

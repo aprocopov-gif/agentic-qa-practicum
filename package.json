@@ -9,7 +9,8 @@
     "test:regression": "playwright test --grep '@regression'",
     "test:api": "playwright test --grep '@api'",
     "test:e2e": "playwright test --grep '@e2e'",
-    "test:destructive": "playwright test --grep '@destructive' --workers=1"
+    "test:destructive": "playwright test --grep '@destructive' --workers=1",
+    "test:evidence": "tsx --test scripts/score-evidence.test.ts"
   },
   "repository": {
     "type": "git",
@@ -25,7 +26,8 @@
   },
   "homepage": "https://github.com/aprocopov-gif/agentic-qa-practicum#readme",
   "devDependencies": {
-    "@playwright/test": "^1.63.0"
+    "@playwright/test": "^1.63.0",
+    "tsx": "^4.20.6"
   },
   "dependencies": {
     "@faker-js/faker": "^10.6.0",

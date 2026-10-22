@@ -1,6 +1,32 @@
 {
   "version": 1,
   "hooks": {
+    "preToolUse": [
+      {
+        "command": ".cursor/hooks/guard-approvals.sh",
+        "matcher": "Write",
+        "failClosed": true
+      },
+      {
+        "command": ".cursor/hooks/guard-heal-gate.sh",
+        "matcher": "Write",
+        "failClosed": true
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/guard-pr-gate.sh",
+        "matcher": "gh\\s+pr\\s+create",
+        "failClosed": true
+      }
+    ],
+    "beforeMCPExecution": [
+      {
+        "command": ".cursor/hooks/guard-jira-bug-gate.sh",
+        "matcher": "createJiraIssue",
+        "failClosed": true
+      }
+    ],
     "afterFileEdit": [
       {
         "command": ".cursor/hooks/guard-test-assertions.sh",
