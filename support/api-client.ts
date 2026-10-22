@@ -51,6 +51,11 @@ function requireAppUrl(): string {
 const contextByOwner = new Map<RecordOwner, APIRequestContext>();
 
 /** Playwright request context for the given family (cached until dispose). */
+export async function createApiContextForOwner(owner: RecordOwner): Promise<APIRequestContext> {
+  return getApiContext(owner);
+}
+
+/** Playwright request context for the given family (cached until dispose). */
 export async function getApiContext(owner: RecordOwner): Promise<APIRequestContext> {
   const existing = contextByOwner.get(owner);
   if (existing) {
