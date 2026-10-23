@@ -1,7 +1,7 @@
 import { deleteChild } from '../support/api-client';
 import { buildChildFirstName } from '../test-data/factories/child.factory';
 import { expectCatalogJsonResponse, expectFieldType, expectJsonObject } from './catalog-contract';
-import { expect, test, trackRecord } from './fixtures';
+import { expect, test } from './fixtures';
 
 const CHILDREN_PATH = '/api/v1/children';
 const ME_PATH = '/api/v1/me';
@@ -41,7 +41,6 @@ test('creates a child, finds them on GET /api/v1/me, and deletes them @api', asy
   expectFieldType(created, 'avatarKey', 'string');
 
   const childId = created.id as string;
-  trackRecord({ type: 'child', id: childId, owner: 'main' });
 
   const meResponse = await mainApi.get(ME_PATH);
   const meBody = expectJsonObject(await expectCatalogJsonResponse(meResponse, 200));

@@ -17,11 +17,30 @@ import {
 } from '../support/playdates-calendar-provision';
 import { playdatesCalendarObserved } from '../test-data/factories/playdates-calendar.factory';
 import { invalidPlaydatesCalendar } from '../test-data/invalid-playdates-calendar';
+import { FAMILY_A_PLAYDATES_PROVISION_LOCK } from '../support/playdates-provision.constants';
 import { AppRoute } from '../test-data/routes';
+
+/**
+ * Traceability: features/AQPBT-12.feature.md ↔ Jira AQPBT-12 ↔ `.cursor/feature-map-update.md`
+ * (playdates calendar export, `/playdates/new` gate, `/app` widget, `/calendar`, `/profile` Calendar Sync).
+ */
 
 const playdatesUrl = new RegExp(`${AppRoute.Playdates.replace('/', '\\/')}(\\/|\\?|$)`);
 const newPlaydateUrl = new RegExp(`${AppRoute.NewPlaydate.replace('/', '\\/')}(\\/|\\?|$)`);
 const profileUrl = new RegExp(`${AppRoute.Profile.replace('/', '\\/')}(\\/|\\?|$)`);
+
+/** Maps to features/AQPBT-12.feature.md and P7 feature map (AQPBT-12). */
+async function expectProvisionedCancelledPastRow(
+  row: Locator,
+  locationNote: string,
+  childName: string,
+): Promise<void> {
+  await expect(row).toBeVisible();
+  await expect(row).toContainText(playdatesCalendarObserved.cancelledPastFamilyNguyen);
+  await expect(row).toContainText(locationNote);
+  await expect(row).toContainText(childName);
+  await expect(row).toContainText(playdatesCalendarObserved.cancelledStatus);
+}
 
 async function expectNoCalendarExportOnPage(playdates: PlaydatesPage): Promise<void> {
   await expect(playdates.googleLink).toHaveCount(0);
@@ -82,7 +101,7 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
 
   test.describe('cancelled Past rows (provisioned)', () => {
     installSpecFamilyProvisioning('aqpbt-12');
-    test.describe.configure({ mode: 'serial' });
+    test.describe.configure({ mode: 'serial', lock: FAMILY_A_PLAYDATES_PROVISION_LOCK });
 
     test.beforeAll(async ({ browser }) => {
       const context = await browser.newContext({ storageState: AUTH_FILE });
@@ -124,9 +143,12 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
 
       await playdates.goto();
 
-      await expect(row).toBeVisible();
-      await expect(row).toContainText(provision.primaryCase.locationNote);
-      await expect(row).toContainText(playdatesCalendarObserved.cancelledStatus);
+      await expect(playdates.pastLabel.first()).toBeVisible();
+      await expectProvisionedCancelledPastRow(
+        row,
+        provision.primaryCase.locationNote,
+        provision.primaryCase.childName,
+      );
       await expectNoRowActions(playdates, row);
     });
 
@@ -140,9 +162,12 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
 
       await expect(page).toHaveURL(newPlaydateUrl);
       await expect(playdates.noUpcomingPlaydates).toHaveText(playdatesCalendarObserved.upcomingEmptyCopy);
-      await expect(
-        playdates.cancelledPastRowByLocationToken(provision.primaryCase.locationToken),
-      ).toBeVisible();
+      const row = playdates.cancelledPastRowByLocationToken(provision.primaryCase.locationToken);
+      await expectProvisionedCancelledPastRow(
+        row,
+        provision.primaryCase.locationNote,
+        provision.primaryCase.childName,
+      );
       await expectNoCalendarExportOnPage(playdates);
     });
 
@@ -166,25 +191,33 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
 
       await playdates.goto();
 
-      await expect(row).toBeVisible();
-      await expect(row).toContainText(provision.futureCancelledCase.locationNote);
-      await expect(row).toContainText(playdatesCalendarObserved.cancelledStatus);
+      await expectProvisionedCancelledPastRow(
+        row,
+        provision.futureCancelledCase.locationNote,
+        provision.futureCancelledCase.childName,
+      );
       await expectNoRowActions(playdates, row);
     });
 
-    test('Past section lists cancelled circle families without export actions @regression', async ({ page }) => {
+    test('Past section lists provisioned cancelled rows without export actions @regression', async ({
+      page,
+    }) => {
       const playdates = new PlaydatesPage(page);
       const provision = getPlaydatesCalendarProvision();
 
       await playdates.goto();
 
       await expect(playdates.pastLabel.first()).toBeVisible();
-      await expect(
+      await expectProvisionedCancelledPastRow(
         playdates.cancelledPastRowByLocationToken(provision.primaryCase.locationToken),
-      ).toBeVisible();
-      await expect(
+        provision.primaryCase.locationNote,
+        provision.primaryCase.childName,
+      );
+      await expectProvisionedCancelledPastRow(
         playdates.cancelledPastRowByLocationToken(provision.futureCancelledCase.locationToken),
-      ).toBeVisible();
+        provision.futureCancelledCase.locationNote,
+        provision.futureCancelledCase.childName,
+      );
       await expectNoCalendarExportOnPage(playdates);
     });
 

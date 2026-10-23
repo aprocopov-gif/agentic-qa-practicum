@@ -1,4 +1,4 @@
-/** Observed copy and row labels from AQPBT-12 / Confluence live exploration. */
+/** Observed copy for AQPBT-12 — feature map routes `/playdates`, `/profile` (Calendar Sync). */
 export const playdatesCalendarObserved = {
   upcomingEmptyCopy: 'No upcoming playdates yet.',
   calendarSyncToast: 'Calendar links ship with playdates 🗓️',

@@ -14,6 +14,7 @@ import {
 import { installSpecFamilyProvisioning } from '../support/spec-family-hooks';
 import { playdatesPendingObserved } from '../test-data/factories/playdates-pending.factory';
 import { invalidPlaydatesPending } from '../test-data/invalid-playdates-pending';
+import { FAMILY_A_PLAYDATES_PROVISION_LOCK } from '../support/playdates-provision.constants';
 import { AppRoute } from '../test-data/routes';
 
 const newPlaydateUrl = new RegExp(`${AppRoute.NewPlaydate.replace('/', '\\/')}(\\/|\\?|$)`);
@@ -62,7 +63,7 @@ test.describe('AQPBT-10 playdates pending requests (Family A)', () => {
   });
 
   test.describe('provisioned cancelled Past row', () => {
-    test.describe.configure({ mode: 'serial' });
+    test.describe.configure({ mode: 'serial', lock: FAMILY_A_PLAYDATES_PROVISION_LOCK });
 
     test.beforeAll(async ({ browser }) => {
       const context = await browser.newContext({ storageState: AUTH_FILE });

@@ -9,7 +9,7 @@ import {
 } from '../test-data/factories/spec-family.factory';
 import { getSpecFamilyProfile, type SpecProfileKey } from '../test-data/spec-profiles';
 import { createChild, deleteChild, getApiContext } from './api-client';
-import { trackRecord } from './record-tracker';
+import { trackRecord, untrackRecord } from './record-tracker';
 
 export const SPEC_TEST_DATA_NOT_READY = 'Test data is not ready';
 export const SPEC_FAMILY_READINESS_TIMEOUT_MS = 15_000;
@@ -171,7 +171,10 @@ export async function teardownSpecFamily(specKey: SpecProfileKey): Promise<void>
   }
   const api = await getApiContext(state.owner);
   for (const child of state.children) {
-    await deleteChild(api, child.id);
+    const result = await deleteChild(api, child.id);
+    if (result.ok) {
+      untrackRecord({ type: 'child', id: child.id });
+    }
   }
   activeBySpec.delete(specKey);
 }

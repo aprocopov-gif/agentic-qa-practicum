@@ -19,24 +19,25 @@ function uniqueRunId(): string {
   return `AQPBT11-${Date.now()}`;
 }
 
-function manualTimeHoursAgo(hoursAgo: number): { date: string; startTime: string; endTime: string } {
-  const start = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
+function manualTimeDaysAhead(daysAhead: number): { date: string; startTime: string; endTime: string } {
+  const start = new Date();
+  start.setDate(start.getDate() + daysAhead);
+  start.setHours(15, 0, 0, 0);
+  const end = new Date(start);
+  end.setHours(18, 0, 0, 0);
   const date = start.toISOString().slice(0, 10);
-  const startTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
-  const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
-  const endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
-  return { date, startTime, endTime };
+  return { date, startTime: '15:00', endTime: '18:00' };
 }
 
 function buildCase(
   runId: string,
   roleSuffix: string,
   childName: string,
-  hoursAgo: number,
+  daysAhead: number,
 ): PlaydatesListsProvisionCase {
   const locationToken = `${runId}-${roleSuffix}`;
   const locationNote = `${locationToken} park`;
-  const manual = manualTimeHoursAgo(hoursAgo);
+  const manual = manualTimeDaysAhead(daysAhead);
   return {
     childName,
     locationToken,
@@ -61,8 +62,8 @@ export function buildPlaydatesListsProvision(
 ): PlaydatesListsProvisionBundle {
   return {
     runId,
-    miaCase: buildCase(runId, 'primary', primaryChildName, 2),
-    mariaCase: buildCase(runId, 'secondary', secondaryChildName, 4),
+    miaCase: buildCase(runId, 'primary', primaryChildName, 6),
+    mariaCase: buildCase(runId, 'secondary', secondaryChildName, 5),
     playdateIds: [],
   };
 }

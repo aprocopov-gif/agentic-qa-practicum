@@ -9,9 +9,9 @@ import {
 } from '../test-data/factories/playdates-calendar-provision.factory';
 import type { SpecProfileKey } from '../test-data/spec-profiles';
 import { getSpecChildByRole } from './spec-family-provision';
+import { cancelOpenAutomationPlaydates } from './playdates-provision-cleanup';
 
 const PLAYDATES_PATH = '/api/v1/playdates';
-const PROVISION_TOKEN_PREFIX = 'AQPBT12-';
 
 export const PLAYDATES_CALENDAR_TEST_DATA_NOT_READY = 'Test data is not ready';
 export const PLAYDATES_CALENDAR_READINESS_TIMEOUT_MS = 15_000;
@@ -203,21 +203,6 @@ async function createCancelledPastViaUi(
   return created.id;
 }
 
-function isProvisionPlaydate(item: PlaydateListItem): boolean {
-  const haystack = `${item.locationText ?? ''} ${item.notes ?? ''}`;
-  return haystack.includes(PROVISION_TOKEN_PREFIX);
-}
-
-async function cancelOpenProvisionPlaydates(api: APIRequestContext): Promise<void> {
-  const list = await listPlaydates(api);
-  for (const item of list) {
-    if (!isProvisionPlaydate(item) || item.status === 'cancelled') {
-      continue;
-    }
-    await cancelPlaydate(api, item.id);
-  }
-}
-
 async function validateProvisionedPlaydates(
   api: APIRequestContext,
   state: PlaydatesCalendarProvisionState,
@@ -233,7 +218,7 @@ export async function provisionPlaydatesCalendarData(
   specKey: SpecProfileKey = 'aqpbt-12',
 ): Promise<PlaydatesCalendarProvisionState> {
   const api = await getApiContext('main');
-  await cancelOpenProvisionPlaydates(api);
+  await cancelOpenAutomationPlaydates(api);
 
   const primaryChild = getSpecChildByRole(specKey, 'boy10');
   const futureChild = getSpecChildByRole(specKey, 'girl7');

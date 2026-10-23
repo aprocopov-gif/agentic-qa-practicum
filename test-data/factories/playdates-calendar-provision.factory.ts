@@ -21,15 +21,6 @@ function uniqueRunId(): string {
   return `AQPBT12-${Date.now()}`;
 }
 
-function manualTimeMinutesAgo(minutesAgo: number): { date: string; startTime: string; endTime: string } {
-  const start = new Date(Date.now() - minutesAgo * 60 * 1000);
-  const date = start.toISOString().slice(0, 10);
-  const startTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
-  const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
-  const endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
-  return { date, startTime, endTime };
-}
-
 function manualTimeDaysAhead(daysAhead: number): { date: string; startTime: string; endTime: string } {
   const start = new Date();
   start.setDate(start.getDate() + daysAhead);
@@ -77,14 +68,14 @@ export function buildPlaydatesCalendarProvision(
       runId,
       'primary',
       primaryChildName,
-      manualTimeMinutesAgo(3),
+      manualTimeDaysAhead(90),
       'Provision primary row for AQPBT-12',
     ),
     futureCancelledCase: buildCase(
       runId,
       'future',
       futureChildName,
-      manualTimeDaysAhead(2),
+      manualTimeDaysAhead(91),
       'Provision future-dated cancelled row for AQPBT-12',
     ),
     playdateIds: [],

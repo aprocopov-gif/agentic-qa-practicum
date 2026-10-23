@@ -128,10 +128,10 @@ export async function createChild(
   };
 }
 
-/** Deletes one child (discovery: DELETE /api/v1/children/{id}). */
+/** Deletes one child (discovery: DELETE /api/v1/children/{id}; UI "remove" uses the same route). */
 export async function deleteChild(apiContext: APIRequestContext, id: string): Promise<DeleteRecordResult> {
   const response = await apiContext.delete(`${CHILDREN_PATH}/${id}`);
-  const ok = response.ok() || response.status() === 204;
+  const ok = response.ok() || response.status() === 204 || response.status() === 404;
   const message = ok ? '' : await readErrorMessage(response);
 
   return {

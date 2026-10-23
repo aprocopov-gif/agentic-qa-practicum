@@ -73,9 +73,14 @@ export class PlaydatesPage {
 
   /** Locator for a cancelled Past row that includes a unique location token from provisioned data. */
   cancelledPastRowByLocationToken(locationToken: string): Locator {
+    return this.cancelledPastRowByLocationNote(`${locationToken} park`);
+  }
+
+  /** Locator for a cancelled Past row matched by the provisioned location note. */
+  cancelledPastRowByLocationNote(locationNote: string): Locator {
     return this.page
       .locator('div')
-      .filter({ hasText: locationToken })
+      .filter({ hasText: locationNote })
       .filter({ hasText: 'Cancelled' })
       .first();
   }
