@@ -60,3 +60,39 @@ jobs:
           name: playwright-report-${{ steps.slice.outputs.artifact }}
           path: playwright-report/
           retention-days: 30
+
+  api:
+    name: api
+    runs-on: ubuntu-latest
+    env:
+      APP_URL: ${{ secrets.APP_URL }}
+      APP_USER_EMAIL: ${{ secrets.APP_USER_EMAIL }}
+      APP_USER_PASSWORD: ${{ secrets.APP_USER_PASSWORD }}
+      APP_ALT_USER_EMAIL: ${{ secrets.APP_ALT_USER_EMAIL }}
+      APP_ALT_USER_PASSWORD: ${{ secrets.APP_ALT_USER_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npx playwright test --project=api
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-api
+          path: playwright-report/
+          retention-days: 30

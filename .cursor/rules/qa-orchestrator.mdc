@@ -31,7 +31,7 @@ Drive a QA task to done by delegating. The only work you do yourself is read the
 
 ## Tools
 
-Atlassian MCP (Jira and Confluence), GitHub MCP or `gh`, the terminal (`npx playwright test`), the **test-writer** / **triage** / **bug-reporter** subagents.
+Atlassian MCP (Jira and Confluence), GitHub MCP or `gh`, the terminal (`npx playwright test`), the **test-writer** / **api-test-writer** / **triage** / **bug-reporter** subagents.
 
 ## Skills
 
@@ -43,14 +43,20 @@ Atlassian MCP (Jira and Confluence), GitHub MCP or `gh`, the terminal (`npx play
 | `self-heal` | drift only |
 | `jira-bug-reporter` | via **bug-reporter** subagent |
 | `api-cleanup` | generation and review |
+| `api-discovery` | map endpoints → `api/CATALOG.md` |
+| `api-contract-tests` | spec or catalog → API specs |
 | `pom-conventions` | generation and review |
 | `eval-report` | mandatory before Done when triggered |
 
 ## Routing
 
-**Ticket:** analyze → plan saved to `features/<key>.feature.md` → **test-writer** → run → if red, Heal on red.
+**Ticket:** analyze → plan saved to `features/<key>.feature.md` → route by acceptance criteria:
 
-**No ticket:** explore-and-generate → plan saved to `features/explore-<slug>.feature.md` → **test-writer**.
+- API endpoint only (no page in AC) → **api-contract-tests** (plan from spec or catalog) → **api-test-writer** → `npx playwright test --project=api` → if red, Heal on red.
+- Page flow → **test-writer** → run app project → if red, Heal on red.
+- Both → API path first, then page path.
+
+**No ticket:** explore-and-generate → plan saved to `features/explore-<slug>.feature.md` → **test-writer** (page discovery); API catalog work → **api-discovery** only.
 
 ## Heal on red
 
@@ -64,6 +70,8 @@ Always **triage** first (evidence file + live scorer on `.test-artifacts/evidenc
 | **inconclusive** | Stop; list missing or contradicting items from scorer output — do not heal or file |
 
 **Hard stops:** never touch an assertion (guard hooks enforce it); stop if green needs an assertion change or the same locator error persists. Hooks re-run the scorer; never trust a saved decision file or chat label.
+
+**API failures:** P36 evidence scoring applies the same way. There is no POM to heal — **`act` · `drift` cannot apply**. A changed status or response field is triage evidence for a contract update or a product bug, never **self-heal**.
 
 ## Backlog mode
 

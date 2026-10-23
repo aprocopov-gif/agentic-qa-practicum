@@ -27,6 +27,13 @@ test('GET /api/v1/events matches catalog contract @api', async ({ mainApi, unaut
     expectFieldType(record, 'venueText', 'string');
     expectFieldType(record, 'details', 'string');
     expectFieldType(record, 'cardKey', 'string');
+    expectFieldType(record, 'status', 'string');
+    expectFieldType(record, 'communityId', 'object');
+    expectFieldType(record, 'communityName', 'object');
+    expectFieldType(record, 'rsvpToken', 'string');
+    expectFieldType(record, 'counts', 'object');
+    expectFieldType(record, 'createdAt', 'string');
+    expectFieldType(record, 'canManage', 'boolean');
   }
 
   await expectUnauthenticatedCatalogGet(() => unauthenticatedApi.get(EVENTS_PATH));

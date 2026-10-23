@@ -46,6 +46,8 @@ Non-negotiables for every task. Details and examples: `playwright-conventions.md
 | Skill | Role |
 |-------|------|
 | `api-cleanup` | Teardown test data |
+| `api-contract-tests` | API specs from spec or catalog |
+| `api-discovery` | Live traffic → `api/CATALOG.md` |
 | `ci-failure-triage` | Classify CI failures |
 | `eval-report` | Refresh reliability metrics |
 | `explore-and-generate` | Ticket-less flow discovery |
@@ -61,11 +63,12 @@ Non-negotiables for every task. Details and examples: `playwright-conventions.md
 
 | Agent | Role |
 |-------|------|
+| `api-test-writer` | Plan to API spec (`api/`) |
 | `bug-reporter` | File confirmed bugs |
 | `test-writer` | Plan to Playwright spec |
 | `triage` | Diagnose red runs |
 
-**Rules** (`.cursor/rules/`): `atlassian-authoring.mdc` — `[Anna]` prefix on Confluence/Jira writes; `qa-orchestrator.mdc` — ticket/CI coordinator; `playwright-conventions.mdc` — test authoring
+**Rules** (`.cursor/rules/`): `api-conventions.mdc` — API tests in `api/`; `atlassian-authoring.mdc` — `[Anna]` prefix on Confluence/Jira writes; `qa-orchestrator.mdc` — ticket/CI coordinator; `playwright-conventions.mdc` — test authoring
 
 ## Agent governance
 
