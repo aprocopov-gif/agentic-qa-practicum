@@ -1,0 +1,125 @@
+---
+description: Conventions for API tests in api/ — sources of truth, safe auth, a success and an intentional error test per endpoint, evidence labels.
+globs: api/**
+alwaysApply: false
+---
+
+# API test conventions
+
+## 1. Sources of truth
+
+Document the spec or approved doc you used. Add or update a row in `api/CATALOG.md` for anything you **executed** in a run. Anything else is an assumption — list it under **Not yet tested**. Rows marked **executed** → characterization tests (pin today’s shapes). Future spec-backed requirements → contract tests against the spec, not chat.
+
+✅ **Good** — title and helpers tie to the catalog snapshot:
+
+```typescript
+// me.api.spec.ts
+test('GET /api/v1/me matches catalog contract @api', async ({ mainApi, unauthenticatedApi }) => {
+  const response = await mainApi.get('/api/v1/me');
+  // …
+});
+
+// catalog-contract.ts
+/** Status returned for catalog GET endpoints when Authorization is omitted (recorded 2026-10-21). */
+export const CATALOG_UNAUTHENTICATED_STATUS = 401;
+```
+
+❌ **Bad** — treat a catalog row as tested when evidence is not **executed** (e.g. `POST /api/v1/playdates` is **inspected only** in `CATALOG.md`); add a spec without a catalog row or a **Not yet tested** bullet.
+
+## 2. Requests
+
+Use Playwright `baseURL` (`APP_URL` in config). Authenticated clients only via `api/fixtures.ts` (`mainApi`, `altApi`), which calls `support/api-client.ts`. Use `unauthenticatedApi` for no-token calls. Relative paths only — never a host, Bearer string, or stable resource id literal in a spec.
+
+✅ **Good** — `api/fixtures.ts` + relative path in spec:
+
+```typescript
+// fixtures.ts
+const apiContext = await createApiContextForOwner('main');
+
+// me.api.spec.ts
+const ME_PATH = '/api/v1/me';
+const response = await mainApi.get(ME_PATH);
+```
+
+❌ **Bad** — bypass fixtures or bake in environment-specific URLs/tokens (not used in `api/` today; do not add):
+
+```typescript
+await request.newContext({
+  baseURL: 'https://test.buddytime.ca',
+  extraHTTPHeaders: { Authorization: 'Bearer eyJ…' },
+});
+```
+
+## 3. Two tests per endpoint
+
+One **success** path (expected status + JSON fields you care about). One **intentional error** that changes exactly one thing (no token, missing required field, empty body). Assert status and expected fields; ensure error bodies do not leak secrets.
+
+✅ **Good** — success then unauthenticated GET (single variable: auth):
+
+```typescript
+// availability.api.spec.ts
+const response = await mainApi.get('/api/v1/availability');
+const body = await expectCatalogJsonResponse(response, 200);
+// …
+await expectUnauthenticatedCatalogGet(() => unauthenticatedApi.get('/api/v1/availability'));
+```
+
+❌ **Bad** — write endpoint with success only, no paired error case (`children.api.spec.ts` today):
+
+```typescript
+test('creates a child, finds them on GET /api/v1/me, and deletes them @api', async ({ mainApi }) => {
+  const createResponse = await mainApi.post('/api/v1/children', { data: createBody });
+  await expectCatalogJsonResponse(createResponse, 201);
+  // no 401/4xx case (e.g. unauthenticated POST or invalid body)
+});
+```
+
+## 4. Writes
+
+Only when undo is **executed** or documented in `CATALOG.md`. After a create, call `trackRecord` from `./fixtures` immediately so global teardown deletes the row even if the test fails. Prefer catalog-observed bodies.
+
+✅ **Good** — POST body matches catalog “Write bodies observed”; DELETE documented as 204; register for teardown:
+
+```typescript
+import { expect, test, trackRecord } from './fixtures';
+
+const createResponse = await mainApi.post('/api/v1/children', { data: createBody });
+const created = expectJsonObject(await expectCatalogJsonResponse(createResponse, 201));
+trackRecord({ type: 'child', id: created.id as string, owner: 'main' });
+```
+
+❌ **Bad** — `children.api.spec.ts` relies on inline `deleteChild` at the end and never calls `trackRecord` (API `POST` is not auto-tracked like UI `page` responses):
+
+```typescript
+const deleteResult = await deleteChild(mainApi, childId);
+expect(deleteResult.ok).toBe(true);
+// trackRecord missing — failure before this line leaves data behind
+```
+
+## 5. Tags
+
+Exactly one tag per `test()`: `@api`. Never on `describe()`.
+
+✅ **Good**:
+
+```typescript
+test('GET /api/v1/connections matches catalog contract @api', async ({ mainApi, unauthenticatedApi }) => {
+```
+
+❌ **Bad** — zero tags or UI suite tags on API tests (keep `@api` only; do not copy `@smoke` / `@sanity` from `tests/`):
+
+```typescript
+test('GET /api/v1/connections matches catalog contract', async ({ mainApi }) => {
+```
+
+## 6. Evidence
+
+Label every claim **executed**, **inspected only**, or **not yet tested** (same vocabulary as `CATALOG.md` **evidence** column). Status codes and shapes must come from a run or catalog row — not from a spec PDF, chat, or model guess alone.
+
+✅ **Good** — catalog table records live run + unauth check:
+
+```markdown
+| GET | `/api/v1/me` | … | 200 | 401 | … | yes | executed |
+```
+
+❌ **Bad** — assert error JSON for routes whose catalog **Not yet tested** section still applies (e.g. “Error response JSON shape (4xx/5xx)”) without executing and updating the catalog.
