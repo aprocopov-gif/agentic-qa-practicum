@@ -1,4 +1,4 @@
-import { PlaydateCircleFamily, PlaydatePlaceOption } from '../playdates-propose.enums';
+import { PlaydatePlaceOption } from '../playdates-propose.enums';
 import type { PlaydateProposalPayload } from './propose-playdate.factory';
 
 export interface PlaydatesCalendarProvisionCase {
@@ -35,17 +35,19 @@ function buildCase(
   runId: string,
   suffix: string,
   childName: string,
-  manual: { date: string; startTime: string; endTime: string },
+  daysAhead: number,
+  circleFamilyName: string,
   optionalNote: string,
 ): PlaydatesCalendarProvisionCase {
   const locationToken = `${runId}-${suffix}`;
   const locationNote = `${locationToken} park`;
+  const manual = manualTimeDaysAhead(daysAhead);
   return {
     childName,
     locationToken,
     locationNote,
     proposal: {
-      circleFamilyName: PlaydateCircleFamily.Nguyens,
+      circleFamilyName,
       mode: 'manual',
       manual,
       place: PlaydatePlaceOption.OutNeutral,
@@ -60,6 +62,9 @@ function buildCase(
 export function buildPlaydatesCalendarProvision(
   primaryChildName: string,
   futureChildName: string,
+  circleFamilyName: string,
+  primaryDaysAhead: number,
+  futureDaysAhead: number,
   runId: string = uniqueRunId(),
 ): PlaydatesCalendarProvisionBundle {
   return {
@@ -68,14 +73,16 @@ export function buildPlaydatesCalendarProvision(
       runId,
       'primary',
       primaryChildName,
-      manualTimeDaysAhead(90),
+      primaryDaysAhead,
+      circleFamilyName,
       'Provision primary row for AQPBT-12',
     ),
     futureCancelledCase: buildCase(
       runId,
       'future',
       futureChildName,
-      manualTimeDaysAhead(91),
+      futureDaysAhead,
+      circleFamilyName,
       'Provision future-dated cancelled row for AQPBT-12',
     ),
     playdateIds: [],

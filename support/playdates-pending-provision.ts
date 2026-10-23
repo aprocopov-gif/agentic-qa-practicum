@@ -122,7 +122,10 @@ export async function waitForPlaydatesPendingProvisionReadiness(
   try {
     await expect(async () => {
       lastReadiness = await getPlaydatesPendingProvisionReadiness(api);
-      expect(lastReadiness.ready, lastReadiness.reportComment).toBe(true);
+      expect(
+        lastReadiness.ready,
+        lastReadiness.ready ? undefined : lastReadiness.reportComment,
+      ).toBe(true);
     }).toPass({ timeout: timeoutMs });
   } catch {
     if (lastReadiness.ready) {
@@ -131,7 +134,9 @@ export async function waitForPlaydatesPendingProvisionReadiness(
     const waitedSeconds = Math.round(timeoutMs / 1000);
     return {
       ready: false,
-      reportComment: `${lastReadiness.reportComment} Waited ${waitedSeconds}s for application test data; skipping test.`,
+      reportComment: `${
+        lastReadiness.ready ? 'Pending playdates not ready.' : lastReadiness.reportComment
+      } Waited ${waitedSeconds}s for application test data; skipping test.`,
     };
   }
   return lastReadiness;

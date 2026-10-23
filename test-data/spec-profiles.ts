@@ -1,7 +1,8 @@
 import type { SpecFamilyProfile } from './factories/spec-family.factory';
 
 /**
- * Per-spec autonomous family shapes (on shared login accounts).
+ * Per-spec autonomous family shapes on dedicated login accounts.
+ * AQPBT-11 → `owner: main` (`APP_USER_*`). AQPBT-12 → `owner: alt` (`APP_ALT_*`).
  * Family X: one boy ~10y. Family Z: two girls ~10y and ~7y.
  */
 export const SPEC_FAMILY_PROFILES: Record<string, SpecFamilyProfile> = {
@@ -37,11 +38,11 @@ export const SPEC_FAMILY_PROFILES: Record<string, SpecFamilyProfile> = {
   },
   'aqpbt-12': {
     specKey: 'aqpbt-12',
-    label: 'Family X (calendar export)',
-    owner: 'main',
+    label: 'Bauchamps (calendar export on alt account)',
+    owner: 'alt',
     children: [
-      { role: 'boy10', gender: 'boy', ageYears: 10 },
-      { role: 'girl7', gender: 'girl', ageYears: 7 },
+      { role: 'boy5', gender: 'boy', ageYears: 5 },
+      { role: 'girl8', gender: 'girl', ageYears: 8 },
     ],
   },
   'aqpbt-14': {

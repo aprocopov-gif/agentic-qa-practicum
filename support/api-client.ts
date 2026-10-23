@@ -8,7 +8,38 @@ import type { RecordOwner, TrackedRecord, TrackedRecordType } from './record-tra
 
 const AVAILABILITY_EXCEPTIONS_PATH = '/api/v1/availability/exceptions';
 const CHILDREN_PATH = '/api/v1/children';
+const FAMILIES_PATH = '/api/v1/families';
 const PLAYDATES_PATH = '/api/v1/playdates';
+
+export interface MeChild {
+  id?: string;
+  firstName: string;
+  birthYear?: number;
+}
+
+export interface MeFamily {
+  id: string;
+  name: string;
+  addressText: string | null;
+  addressVisibility: string;
+  children?: MeChild[];
+}
+
+export interface MeResponse {
+  family: MeFamily | null;
+}
+
+export interface UpsertFamilyPayload {
+  name: string;
+  addressText: string;
+  addressVisibility: string;
+}
+
+export interface UpsertFamilyResult {
+  ok: boolean;
+  status: number;
+  message: string;
+}
 
 export interface DeleteRecordResult {
   type: TrackedRecordType;
@@ -105,6 +136,76 @@ export interface CreateChildResult {
   ok: boolean;
   status: number;
   message: string;
+}
+
+/** GET `/api/v1/me` parsed body. */
+export async function getMe(apiContext: APIRequestContext): Promise<MeResponse> {
+  const response = await apiContext.get('/api/v1/me');
+  if (!response.ok()) {
+    throw new Error(`GET /api/v1/me failed: ${await readErrorMessage(response)}`);
+  }
+  return (await response.json()) as MeResponse;
+}
+
+/** Creates a family when the parent has none (POST `/api/v1/families`). */
+export async function createFamily(
+  apiContext: APIRequestContext,
+  payload: UpsertFamilyPayload,
+): Promise<UpsertFamilyResult> {
+  const response = await apiContext.post(FAMILIES_PATH, { data: payload });
+  const ok = response.ok();
+  return {
+    ok,
+    status: response.status(),
+    message: ok ? '' : await readErrorMessage(response),
+  };
+}
+
+/** Updates the signed-in parent's family (PATCH `/api/v1/families`). */
+export async function updateFamily(
+  apiContext: APIRequestContext,
+  payload: UpsertFamilyPayload,
+): Promise<UpsertFamilyResult> {
+  const response = await apiContext.patch(FAMILIES_PATH, { data: payload });
+  const ok = response.ok();
+  return {
+    ok,
+    status: response.status(),
+    message: ok ? '' : await readErrorMessage(response),
+  };
+}
+
+export interface CreatePlaydatePayload {
+  inviteeFamilyId: string;
+  startsAt: string;
+  endsAt: string;
+  locationKind: string;
+  hostFamilyId: string | null;
+  locationText: string;
+  childIds: string[];
+  notes: string;
+}
+
+export interface CreatePlaydateResult {
+  id: string;
+  ok: boolean;
+  status: number;
+  message: string;
+}
+
+/** Creates a playdate proposal (POST `/api/v1/playdates`). */
+export async function createPlaydate(
+  apiContext: APIRequestContext,
+  payload: CreatePlaydatePayload,
+): Promise<CreatePlaydateResult> {
+  const response = await apiContext.post(PLAYDATES_PATH, { data: payload });
+  const ok = response.ok();
+  const message = ok ? '' : await readErrorMessage(response);
+  if (!ok) {
+    return { id: '', ok, status: response.status(), message };
+  }
+  const body = (await response.json()) as { id: string };
+  return { id: body.id, ok, status: response.status(), message };
 }
 
 /** Creates one child (discovery: POST /api/v1/children). */

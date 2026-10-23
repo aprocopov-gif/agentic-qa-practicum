@@ -26,7 +26,8 @@ cp .env.example .env
 | Section in `.env.example` | Variables | Needed for |
 |---------------------------|-----------|------------|
 | **Run tests** | `APP_URL`, `APP_USER_EMAIL`, `APP_USER_PASSWORD` | Every `npx playwright test` run; `APP_URL` is Playwright `baseURL`. |
-| **Run tests (two-family flows)** | `APP_ALT_USER_EMAIL`, `APP_ALT_USER_PASSWORD` | Specs that log in as a second parent (propose/accept playdates, cross-family UI). Tests that need the alt family **skip** when these are unset. |
+| **Run tests (two-family flows)** | `APP_ALT_USER_EMAIL`, `APP_ALT_USER_PASSWORD` | Second household (e.g. AQPBT-12 Bauchamps on alt). Tests **skip** when unset. |
+| **Family B playdate gate** | `APP_GATE_USER_EMAIL`, `APP_GATE_USER_PASSWORD` | Logged-in parent **without** a set-up dashboard (AC5 gate copy on `/playdates`). Gate @regression tests **skip** when unset. Do **not** run Bauchamps setup on this account. |
 | **Agent / CI setup** | `CURSOR_API_KEY`, `ATLASSIAN_*`, `JIRA_PROJECT_KEY`, `CONFLUENCE_SPACE_KEY` | Scheduled test-generation workflow and headless backlog runs—not required for local `playwright test` alone. |
 
 **Why two family accounts:** BuddyTime models separate households. One storage state is built for the main family in the `setup` project; playdate and friends flows often need a second signed-in parent in another browser context. Using two dedicated test accounts avoids colliding with real users and matches how parents interact in the product.

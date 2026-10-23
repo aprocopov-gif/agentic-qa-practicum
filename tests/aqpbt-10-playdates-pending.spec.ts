@@ -2,7 +2,12 @@ import { type Locator } from '@playwright/test';
 
 import { test, expect } from '../fixtures/cleanup.fixture';
 import { PlaydatesPage } from '../pages/playdates.page';
-import { ALT_AUTH_FILE, AUTH_FILE } from '../support/auth.constants';
+import { AUTH_FILE } from '../support/auth.constants';
+import {
+  GATE_FAMILY_SKIP_REASON,
+  isGateFamilyAuthConfigured,
+  newGateFamilyContext,
+} from '../support/gate-family.context';
 import { getApiContext } from '../support/api-client';
 import {
   getPlaydatesPendingProvision,
@@ -135,7 +140,8 @@ test.describe('AQPBT-10 playdates pending requests (Family A)', () => {
 });
 
 test('Family B gate hides Pending requests @regression', async ({ browser }) => {
-  const context = await browser.newContext({ storageState: ALT_AUTH_FILE });
+  test.skip(!isGateFamilyAuthConfigured(), GATE_FAMILY_SKIP_REASON);
+  const context = await newGateFamilyContext(browser);
   const page = await context.newPage();
   try {
     const playdates = new PlaydatesPage(page);

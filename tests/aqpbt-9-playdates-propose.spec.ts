@@ -1,6 +1,10 @@
 import { test, expect } from '../fixtures/cleanup.fixture';
 import { PlaydatesPage } from '../pages/playdates.page';
-import { ALT_AUTH_FILE } from '../support/auth.constants';
+import {
+  GATE_FAMILY_SKIP_REASON,
+  isGateFamilyAuthConfigured,
+  newGateFamilyContext,
+} from '../support/gate-family.context';
 import { installSpecFamilyProvisioning } from '../support/spec-family-hooks';
 import { getSpecChildByRole } from '../support/spec-family-provision';
 import { playdatesProposeObserved } from '../test-data/factories/propose-playdate.factory';
@@ -154,7 +158,8 @@ test.describe('AQPBT-9 playdates propose form (Family A)', () => {
 });
 
 test('Family B gate hides Propose and Send request @regression', async ({ browser }) => {
-  const context = await browser.newContext({ storageState: ALT_AUTH_FILE });
+  test.skip(!isGateFamilyAuthConfigured(), GATE_FAMILY_SKIP_REASON);
+  const context = await newGateFamilyContext(browser);
   const page = await context.newPage();
   try {
     const playdates = new PlaydatesPage(page);

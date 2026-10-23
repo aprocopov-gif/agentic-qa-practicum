@@ -8,4 +8,6 @@ export enum PlaydatePlaceOption {
 export enum PlaydateCircleFamily {
   Nguyens = 'The Nguyens',
   Petrovs = 'The Petrovs',
+  /** Main practicum family (Lev Test); used when alt Bauchamps accepts main's circle invite. */
+  Gorfels = 'The Gorfels',
 }

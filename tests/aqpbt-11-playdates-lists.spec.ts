@@ -3,8 +3,14 @@ import { type Locator } from '@playwright/test';
 import { test, expect } from '../fixtures/cleanup.fixture';
 import { DashboardPage } from '../pages/dashboard.page';
 import { PlaydatesPage } from '../pages/playdates.page';
-import { ALT_AUTH_FILE, AUTH_FILE } from '../support/auth.constants';
+import { storageStatePathForOwner } from '../support/auth.constants';
+import {
+  GATE_FAMILY_SKIP_REASON,
+  isGateFamilyAuthConfigured,
+  newGateFamilyContext,
+} from '../support/gate-family.context';
 import { getApiContext } from '../support/api-client';
+import { getSpecFamilyProfile } from '../test-data/spec-profiles';
 import { installSpecFamilyProvisioning } from '../support/spec-family-hooks';
 import {
   expectProvisionedPastNewestFirst,
@@ -31,12 +37,16 @@ async function expectNoRowActions(playdates: PlaydatesPage, row: Locator): Promi
   await expect(playdates.cancelButtonIn(row)).toHaveCount(0);
 }
 
+const aqpbt11Owner = getSpecFamilyProfile('aqpbt-11').owner;
+
 test.describe('AQPBT-11 playdates upcoming and past lists (Family A)', () => {
+  test.use({ storageState: storageStatePathForOwner(aqpbt11Owner) });
+
   installSpecFamilyProvisioning('aqpbt-11');
-  test.describe.configure({ mode: 'serial', lock: FAMILY_A_PLAYDATES_PROVISION_LOCK });
+  test.describe.configure({ timeout: 120_000, lock: FAMILY_A_PLAYDATES_PROVISION_LOCK });
 
   test.beforeAll(async ({ browser }) => {
-    const context = await browser.newContext({ storageState: AUTH_FILE });
+    const context = await browser.newContext({ storageState: storageStatePathForOwner(aqpbt11Owner) });
     const page = await context.newPage();
     try {
       await provisionPlaydatesListsData(page, 'aqpbt-11');
@@ -49,7 +59,7 @@ test.describe('AQPBT-11 playdates upcoming and past lists (Family A)', () => {
   });
 
   test.beforeEach(async ({}, testInfo) => {
-    const api = await getApiContext('main');
+    const api = await getApiContext(aqpbt11Owner);
     const readiness = await waitForProvisionedPlaydatesReadiness(api);
     if (!readiness.ready) {
       testInfo.annotations.push({ type: 'note', description: readiness.reportComment });
@@ -59,7 +69,7 @@ test.describe('AQPBT-11 playdates upcoming and past lists (Family A)', () => {
 
   test.afterAll(async () => {
     try {
-      const readiness = await getProvisionedPlaydatesReadiness(await getApiContext('main'));
+      const readiness = await getProvisionedPlaydatesReadiness(await getApiContext(aqpbt11Owner));
       if (readiness.ready) {
         await teardownProvisionedPlaydates(readiness.state);
       }
@@ -147,7 +157,7 @@ test.describe('AQPBT-11 playdates upcoming and past lists (Family A)', () => {
   });
 
   test('Past includes both provisioned cancelled rows @regression', async () => {
-    const api = await getApiContext('main');
+    const api = await getApiContext(aqpbt11Owner);
     await validateProvisionedPlaydates(api, getPlaydatesListsProvision());
   });
 
@@ -164,13 +174,14 @@ test.describe('AQPBT-11 playdates upcoming and past lists (Family A)', () => {
   });
 
   test('Past rows appear newest-first @api', async () => {
-    const api = await getApiContext('main');
+    const api = await getApiContext(aqpbt11Owner);
     await expectProvisionedPastNewestFirst(api, getPlaydatesListsProvision());
   });
 });
 
 test('Family B gate on Playdates hides Upcoming and Past @regression', async ({ browser }) => {
-  const context = await browser.newContext({ storageState: ALT_AUTH_FILE });
+  test.skip(!isGateFamilyAuthConfigured(), GATE_FAMILY_SKIP_REASON);
+  const context = await newGateFamilyContext(browser);
   const page = await context.newPage();
   try {
     const playdates = new PlaydatesPage(page);
@@ -189,7 +200,8 @@ test('Family B gate on Playdates hides Upcoming and Past @regression', async ({ 
 });
 
 test('Family B gate on Find a playdate hides Upcoming and Past @regression', async ({ browser }) => {
-  const context = await browser.newContext({ storageState: ALT_AUTH_FILE });
+  test.skip(!isGateFamilyAuthConfigured(), GATE_FAMILY_SKIP_REASON);
+  const context = await newGateFamilyContext(browser);
   const page = await context.newPage();
   try {
     const playdates = new PlaydatesPage(page);
