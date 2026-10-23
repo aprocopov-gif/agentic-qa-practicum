@@ -43,6 +43,19 @@ export function expectFieldType(
   expect(typeof value).toBe(kind);
 }
 
+/** Catalog fields that may be JSON null on GET list items (observed on `/api/v1/events`). */
+export function expectFieldTypeOrNull(
+  record: Record<string, unknown>,
+  key: string,
+  kind: 'string' | 'number' | 'boolean' | 'object' | 'array',
+): void {
+  expect(record, `missing field ${key}`).toHaveProperty(key);
+  if (record[key] === null) {
+    return;
+  }
+  expectFieldType(record, key, kind);
+}
+
 export async function expectUnauthenticatedCatalogGet(
   unauthenticatedGet: () => Promise<APIResponse>,
 ): Promise<void> {
