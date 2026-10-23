@@ -1,4 +1,4 @@
-import { PlaydateCircleFamily, PlaydatePlaceOption } from '../playdates-propose.enums';
+import { PlaydatePlaceOption } from '../playdates-propose.enums';
 import type { PlaydateProposalPayload } from './propose-playdate.factory';
 
 export interface PlaydatesListsProvisionCase {
@@ -29,11 +29,29 @@ function manualTimeDaysAhead(daysAhead: number): { date: string; startTime: stri
   return { date, startTime: '15:00', endTime: '18:00' };
 }
 
+/** Unique cancelled Past rows for AQPBT-11 list tests. */
+export function buildPlaydatesListsProvision(
+  primaryChildName: string,
+  secondaryChildName: string,
+  circleFamilyName: string,
+  primaryDaysAhead: number,
+  secondaryDaysAhead: number,
+  runId: string = uniqueRunId(),
+): PlaydatesListsProvisionBundle {
+  return {
+    runId,
+    miaCase: buildCase(runId, 'primary', primaryChildName, primaryDaysAhead, circleFamilyName),
+    mariaCase: buildCase(runId, 'secondary', secondaryChildName, secondaryDaysAhead, circleFamilyName),
+    playdateIds: [],
+  };
+}
+
 function buildCase(
   runId: string,
   roleSuffix: string,
   childName: string,
   daysAhead: number,
+  circleFamilyName: string,
 ): PlaydatesListsProvisionCase {
   const locationToken = `${runId}-${roleSuffix}`;
   const locationNote = `${locationToken} park`;
@@ -43,7 +61,7 @@ function buildCase(
     locationToken,
     locationNote,
     proposal: {
-      circleFamilyName: PlaydateCircleFamily.Nguyens,
+      circleFamilyName,
       mode: 'manual',
       manual,
       place: PlaydatePlaceOption.OutNeutral,
@@ -51,19 +69,5 @@ function buildCase(
       locationNote,
       optionalNote: `Provision ${childName} for AQPBT-11`,
     },
-  };
-}
-
-/** Unique cancelled Past rows for AQPBT-11 list tests. */
-export function buildPlaydatesListsProvision(
-  primaryChildName: string,
-  secondaryChildName: string,
-  runId: string = uniqueRunId(),
-): PlaydatesListsProvisionBundle {
-  return {
-    runId,
-    miaCase: buildCase(runId, 'primary', primaryChildName, 6),
-    mariaCase: buildCase(runId, 'secondary', secondaryChildName, 5),
-    playdateIds: [],
   };
 }

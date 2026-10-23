@@ -5,9 +5,14 @@ import { CalendarPage } from '../pages/calendar.page';
 import { DashboardPage } from '../pages/dashboard.page';
 import { PlaydatesPage } from '../pages/playdates.page';
 import { ProfilePage } from '../pages/profile.page';
-import { ALT_AUTH_FILE, AUTH_FILE } from '../support/auth.constants';
+import { storageStatePathForOwner } from '../support/auth.constants';
+import {
+  GATE_FAMILY_SKIP_REASON,
+  isGateFamilyAuthConfigured,
+  newGateFamilyContext,
+} from '../support/gate-family.context';
 import { getApiContext } from '../support/api-client';
-import { installSpecFamilyProvisioning } from '../support/spec-family-hooks';
+import { getSpecFamilyProfile } from '../test-data/spec-profiles';
 import {
   getPlaydatesCalendarProvision,
   getPlaydatesCalendarProvisionReadiness,
@@ -32,11 +37,12 @@ const profileUrl = new RegExp(`${AppRoute.Profile.replace('/', '\\/')}(\\/|\\?|$
 /** Maps to features/AQPBT-12.feature.md and P7 feature map (AQPBT-12). */
 async function expectProvisionedCancelledPastRow(
   row: Locator,
+  circleFamilyName: string,
   locationNote: string,
   childName: string,
 ): Promise<void> {
   await expect(row).toBeVisible();
-  await expect(row).toContainText(playdatesCalendarObserved.cancelledPastFamilyNguyen);
+  await expect(row).toContainText(circleFamilyName);
   await expect(row).toContainText(locationNote);
   await expect(row).toContainText(childName);
   await expect(row).toContainText(playdatesCalendarObserved.cancelledStatus);
@@ -55,7 +61,11 @@ async function expectNoRowActions(playdates: PlaydatesPage, row: Locator): Promi
   await expect(playdates.cancelButtonIn(row)).toHaveCount(0);
 }
 
+const aqpbt12Owner = getSpecFamilyProfile('aqpbt-12').owner;
+
 test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
+  test.use({ storageState: storageStatePathForOwner(aqpbt12Owner) });
+
   test('empty Upcoming on Playdates shows message without calendar export @smoke', async ({ page }) => {
     const playdates = new PlaydatesPage(page);
 
@@ -100,11 +110,10 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
   });
 
   test.describe('cancelled Past rows (provisioned)', () => {
-    installSpecFamilyProvisioning('aqpbt-12');
-    test.describe.configure({ mode: 'serial', lock: FAMILY_A_PLAYDATES_PROVISION_LOCK });
+    test.describe.configure({ timeout: 120_000, lock: FAMILY_A_PLAYDATES_PROVISION_LOCK });
 
     test.beforeAll(async ({ browser }) => {
-      const context = await browser.newContext({ storageState: AUTH_FILE });
+      const context = await browser.newContext({ storageState: storageStatePathForOwner(aqpbt12Owner) });
       const page = await context.newPage();
       try {
         await provisionPlaydatesCalendarData(page, 'aqpbt-12');
@@ -117,8 +126,8 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
     });
 
     test.beforeEach(async ({}, testInfo) => {
-      const api = await getApiContext('main');
-      const readiness = await waitForPlaydatesCalendarProvisionReadiness(api);
+      const api = await getApiContext(aqpbt12Owner);
+      const readiness = await waitForPlaydatesCalendarProvisionReadiness(api, aqpbt12Owner);
       if (!readiness.ready) {
         testInfo.annotations.push({ type: 'note', description: readiness.reportComment });
         test.skip(true, readiness.reportComment);
@@ -127,7 +136,8 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
 
     test.afterAll(async () => {
       try {
-        const readiness = await getPlaydatesCalendarProvisionReadiness(await getApiContext('main'));
+        const api = await getApiContext(aqpbt12Owner);
+        const readiness = await getPlaydatesCalendarProvisionReadiness(api, aqpbt12Owner);
         if (readiness.ready) {
           await teardownPlaydatesCalendarProvision(readiness.state);
         }
@@ -146,6 +156,7 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
       await expect(playdates.pastLabel.first()).toBeVisible();
       await expectProvisionedCancelledPastRow(
         row,
+        provision.primaryCase.proposal.circleFamilyName,
         provision.primaryCase.locationNote,
         provision.primaryCase.childName,
       );
@@ -165,6 +176,7 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
       const row = playdates.cancelledPastRowByLocationToken(provision.primaryCase.locationToken);
       await expectProvisionedCancelledPastRow(
         row,
+        provision.primaryCase.proposal.circleFamilyName,
         provision.primaryCase.locationNote,
         provision.primaryCase.childName,
       );
@@ -193,6 +205,7 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
 
       await expectProvisionedCancelledPastRow(
         row,
+        provision.futureCancelledCase.proposal.circleFamilyName,
         provision.futureCancelledCase.locationNote,
         provision.futureCancelledCase.childName,
       );
@@ -210,11 +223,13 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
       await expect(playdates.pastLabel.first()).toBeVisible();
       await expectProvisionedCancelledPastRow(
         playdates.cancelledPastRowByLocationToken(provision.primaryCase.locationToken),
+        provision.primaryCase.proposal.circleFamilyName,
         provision.primaryCase.locationNote,
         provision.primaryCase.childName,
       );
       await expectProvisionedCancelledPastRow(
         playdates.cancelledPastRowByLocationToken(provision.futureCancelledCase.locationToken),
+        provision.futureCancelledCase.proposal.circleFamilyName,
         provision.futureCancelledCase.locationNote,
         provision.futureCancelledCase.childName,
       );
@@ -237,7 +252,8 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
 });
 
 test('Family B gate on Playdates hides lists and calendar export @regression', async ({ browser }) => {
-  const context = await browser.newContext({ storageState: ALT_AUTH_FILE });
+  test.skip(!isGateFamilyAuthConfigured(), GATE_FAMILY_SKIP_REASON);
+  const context = await newGateFamilyContext(browser);
   const page = await context.newPage();
   try {
     const playdates = new PlaydatesPage(page);
@@ -259,7 +275,8 @@ test('Family B gate on Playdates hides lists and calendar export @regression', a
 test('Family B gate on Find a playdate hides lists and calendar export @regression', async ({
   browser,
 }) => {
-  const context = await browser.newContext({ storageState: ALT_AUTH_FILE });
+  test.skip(!isGateFamilyAuthConfigured(), GATE_FAMILY_SKIP_REASON);
+  const context = await newGateFamilyContext(browser);
   const page = await context.newPage();
   try {
     const playdates = new PlaydatesPage(page);

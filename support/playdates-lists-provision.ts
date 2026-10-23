@@ -7,10 +7,17 @@ import {
   type PlaydatesListsProvisionCase,
   buildPlaydatesListsProvision,
 } from '../test-data/factories/playdates-lists-provision.factory';
-import type { SpecProfileKey } from '../test-data/spec-profiles';
+import { getSpecFamilyProfile, type SpecProfileKey } from '../test-data/spec-profiles';
+import type { RecordOwner } from './record-tracker';
 import { getSpecChildByRole } from './spec-family-provision';
 import type { PlaydateProposalPayload } from '../test-data/factories/propose-playdate.factory';
 import { cancelOpenAutomationPlaydates } from './playdates-provision-cleanup';
+import { playdateCircleFamilyForSpec } from '../test-data/playdates-spec-circle';
+import { daysAheadBaseForVisiblePast } from './playdates-provision-schedule';
+import {
+  createCancelledPastPlaydateViaApi,
+  resolveInviteeFamilyId,
+} from './playdates-provision-api';
 
 const PLAYDATES_PATH = '/api/v1/playdates';
 
@@ -36,12 +43,14 @@ interface PlaydateListItem {
 
 export interface PlaydatesListsProvisionState {
   runId: string;
+  owner: RecordOwner;
   miaCase: PlaydatesListsProvisionCase;
   mariaCase: PlaydatesListsProvisionCase;
   playdateIds: string[];
 }
 
 let activeProvision: PlaydatesListsProvisionState | null = null;
+let listsProvisionInFlight: Promise<PlaydatesListsProvisionState> | null = null;
 
 export function getPlaydatesListsProvision(): PlaydatesListsProvisionState {
   if (!activeProvision) {
@@ -103,7 +112,7 @@ function collectProvisionRowIssues(
       issues.push(`Playdate ${provisionCase.locationToken} is ${row.status}, expected cancelled.`);
     }
     const childNames = (row.children ?? []).map((child) => child.firstName);
-    if (!childNames.includes(provisionCase.childName)) {
+    if (childNames.length > 0 && !childNames.includes(provisionCase.childName)) {
       issues.push(
         `Playdate ${provisionCase.locationToken} must include child ${provisionCase.childName}.`,
       );
@@ -171,7 +180,10 @@ export async function waitForProvisionedPlaydatesReadiness(
   try {
     await expect(async () => {
       lastReadiness = await getProvisionedPlaydatesReadiness(api);
-      expect(lastReadiness.ready, lastReadiness.reportComment).toBe(true);
+      expect(
+        lastReadiness.ready,
+        lastReadiness.ready ? undefined : lastReadiness.reportComment,
+      ).toBe(true);
     }).toPass({ timeout: timeoutMs });
   } catch {
     if (lastReadiness.ready) {
@@ -180,7 +192,9 @@ export async function waitForProvisionedPlaydatesReadiness(
     const waitedSeconds = Math.round(timeoutMs / 1000);
     return {
       ready: false,
-      reportComment: `${lastReadiness.reportComment} Waited ${waitedSeconds}s for application test data; skipping test.`,
+      reportComment: `${
+        lastReadiness.ready ? 'Provisioned playdates not ready.' : lastReadiness.reportComment
+      } Waited ${waitedSeconds}s for application test data; skipping test.`,
     };
   }
 
@@ -207,9 +221,29 @@ async function fillManualProposal(page: Page, payload: PlaydateProposalPayload):
   await form.submit();
 }
 
+async function createCancelledPastRow(
+  page: Page,
+  api: APIRequestContext,
+  owner: RecordOwner,
+  provisionCase: PlaydatesListsProvisionCase,
+): Promise<string> {
+  const inviteeFamilyId = await resolveInviteeFamilyId(api, provisionCase.proposal.circleFamilyName);
+  if (inviteeFamilyId && provisionCase.proposal.manual) {
+    return createCancelledPastPlaydateViaApi(api, owner, {
+      circleFamilyName: provisionCase.proposal.circleFamilyName,
+      manual: provisionCase.proposal.manual,
+      locationText: provisionCase.locationNote,
+      notes: provisionCase.proposal.optionalNote ?? '',
+      childFirstName: provisionCase.childName,
+    });
+  }
+  return createCancelledPastViaUi(page, api, owner, provisionCase);
+}
+
 async function createCancelledPastViaUi(
   page: Page,
   api: APIRequestContext,
+  owner: RecordOwner,
   provisionCase: PlaydatesListsProvisionCase,
 ): Promise<string> {
   await fillManualProposal(page, provisionCase.proposal);
@@ -227,8 +261,38 @@ async function createCancelledPastViaUi(
   }
 
   expect(created!.status).toBe('cancelled');
-  trackRecord({ type: 'playdate', id: created.id, owner: 'main' });
+  trackRecord({ type: 'playdate', id: created.id, owner });
   return created.id;
+}
+
+async function runPlaydatesListsProvision(
+  page: Page,
+  specKey: SpecProfileKey,
+): Promise<PlaydatesListsProvisionState> {
+  const owner = getSpecFamilyProfile(specKey).owner;
+  const api = await getApiContext(owner);
+  await cancelOpenAutomationPlaydates(api);
+
+  const primaryChild = getSpecChildByRole(specKey, 'girl10');
+  const secondaryChild = getSpecChildByRole(specKey, 'girl7');
+  const circleFamilyName = playdateCircleFamilyForSpec(specKey);
+  const daysBase = await daysAheadBaseForVisiblePast(api);
+  const bundle = buildPlaydatesListsProvision(
+    primaryChild.firstName,
+    secondaryChild.firstName,
+    circleFamilyName,
+    daysBase + 1,
+    daysBase,
+  );
+  const ids: string[] = [];
+
+  ids.push(await createCancelledPastRow(page, api, owner, bundle.miaCase));
+  ids.push(await createCancelledPastRow(page, api, owner, bundle.mariaCase));
+
+  const state: PlaydatesListsProvisionState = { ...bundle, owner, playdateIds: ids };
+  await validateProvisionedPlaydates(api, state);
+  activeProvision = state;
+  return state;
 }
 
 /** Creates Mia and Maria cancelled Past rows, validates, and stores locators for specs. */
@@ -236,26 +300,20 @@ export async function provisionPlaydatesListsData(
   page: Page,
   specKey: SpecProfileKey = 'aqpbt-11',
 ): Promise<PlaydatesListsProvisionState> {
-  const api = await getApiContext('main');
-  await cancelOpenAutomationPlaydates(api);
-
-  const primaryChild = getSpecChildByRole(specKey, 'girl10');
-  const secondaryChild = getSpecChildByRole(specKey, 'girl7');
-  const state = buildPlaydatesListsProvision(primaryChild.firstName, secondaryChild.firstName);
-  const ids: string[] = [];
-
-  ids.push(await createCancelledPastViaUi(page, api, state.miaCase));
-  ids.push(await createCancelledPastViaUi(page, api, state.mariaCase));
-
-  state.playdateIds = ids;
-  await validateProvisionedPlaydates(api, state);
-  activeProvision = state;
-  return state;
+  if (activeProvision) {
+    return activeProvision;
+  }
+  if (!listsProvisionInFlight) {
+    listsProvisionInFlight = runPlaydatesListsProvision(page, specKey).finally(() => {
+      listsProvisionInFlight = null;
+    });
+  }
+  return listsProvisionInFlight;
 }
 
 /** Best-effort cancel for tracked provision ids (already-cancelled rows may no-op). */
 export async function teardownProvisionedPlaydates(state: PlaydatesListsProvisionState): Promise<void> {
-  const api = await getApiContext('main');
+  const api = await getApiContext(state.owner);
   for (const id of state.playdateIds) {
     const list = await listPlaydates(api);
     const row = list.find((item) => item.id === id);

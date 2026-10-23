@@ -4,6 +4,11 @@ import { cancelPlaydate } from './api-client';
 
 const AUTOMATION_PLAYDATE_MARKERS = ['AQPBT10-', 'AQPBT11-', 'AQPBT12-'] as const;
 
+/** True when location notes or optional notes contain an automation marker. */
+export function isAutomationPlaydateMarker(haystack: string): boolean {
+  return AUTOMATION_PLAYDATE_MARKERS.some((marker) => haystack.includes(marker));
+}
+
 interface PlaydateListItem {
   id: string;
   status: string;
@@ -13,7 +18,7 @@ interface PlaydateListItem {
 
 function isAutomationPlaydate(item: PlaydateListItem): boolean {
   const haystack = `${item.locationText ?? ''} ${item.notes ?? ''}`;
-  return AUTOMATION_PLAYDATE_MARKERS.some((marker) => haystack.includes(marker));
+  return isAutomationPlaydateMarker(haystack);
 }
 
 /** Cancels non-cancelled automation playdates so provisioning is not blocked by stale Pending rows. */

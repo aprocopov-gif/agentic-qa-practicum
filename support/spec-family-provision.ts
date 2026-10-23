@@ -106,7 +106,10 @@ export async function waitForSpecFamilyReadiness(
   try {
     await expect(async () => {
       lastReadiness = await getSpecFamilyReadiness(specKey);
-      expect(lastReadiness.ready, lastReadiness.reportComment).toBe(true);
+      expect(
+        lastReadiness.ready,
+        lastReadiness.ready ? undefined : lastReadiness.reportComment,
+      ).toBe(true);
     }).toPass({ timeout: timeoutMs });
   } catch {
     if (lastReadiness.ready) {
@@ -115,7 +118,9 @@ export async function waitForSpecFamilyReadiness(
     const waitedSeconds = Math.round(timeoutMs / 1000);
     return {
       ready: false,
-      reportComment: `${lastReadiness.reportComment} Waited ${waitedSeconds}s for application test data; skipping test.`,
+      reportComment: `${
+        lastReadiness.ready ? 'Spec family not ready.' : lastReadiness.reportComment
+      } Waited ${waitedSeconds}s for application test data; skipping test.`,
     };
   }
 

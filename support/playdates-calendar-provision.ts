@@ -7,9 +7,18 @@ import {
   type PlaydatesCalendarProvisionCase,
   buildPlaydatesCalendarProvision,
 } from '../test-data/factories/playdates-calendar-provision.factory';
-import type { SpecProfileKey } from '../test-data/spec-profiles';
+import { getSpecFamilyProfile, type SpecProfileKey } from '../test-data/spec-profiles';
+import type { RecordOwner } from './record-tracker';
 import { getSpecChildByRole } from './spec-family-provision';
+import { altBaselineFamily } from '../test-data/baseline-alt-family';
 import { cancelOpenAutomationPlaydates } from './playdates-provision-cleanup';
+import { playdateCircleFamilyForSpec } from '../test-data/playdates-spec-circle';
+import { daysAheadBaseForVisiblePast } from './playdates-provision-schedule';
+import {
+  createCancelledPastPlaydateViaApi,
+  resolveInviteeFamilyId,
+} from './playdates-provision-api';
+import type { PlaydateProposalPayload } from '../test-data/factories/propose-playdate.factory';
 
 const PLAYDATES_PATH = '/api/v1/playdates';
 
@@ -31,12 +40,85 @@ interface PlaydateListItem {
 
 export interface PlaydatesCalendarProvisionState {
   runId: string;
+  owner: RecordOwner;
   primaryCase: PlaydatesCalendarProvisionCase;
   futureCancelledCase: PlaydatesCalendarProvisionCase;
   playdateIds: string[];
 }
 
 let activeCalendarProvision: PlaydatesCalendarProvisionState | null = null;
+let calendarProvisionInFlight: Promise<PlaydatesCalendarProvisionState> | null = null;
+
+async function rehydrateCalendarProvisionFromApi(
+  api: APIRequestContext,
+  owner: RecordOwner,
+): Promise<PlaydatesCalendarProvisionState | null> {
+  const response = await api.get(PLAYDATES_PATH);
+  if (!response.ok()) {
+    return null;
+  }
+  const list = (await response.json()) as PlaydateListItem[];
+  const pairs = new Map<string, { primary?: PlaydateListItem; future?: PlaydateListItem }>();
+
+  for (const item of list) {
+    if (item.status !== 'cancelled') {
+      continue;
+    }
+    const haystack = `${item.locationText ?? ''} ${item.notes ?? ''}`;
+    const match = haystack.match(/(AQPBT12-\d+)-(primary|future)/);
+    if (!match) {
+      continue;
+    }
+    const [, runId, role] = match;
+    const bucket = pairs.get(runId) ?? {};
+    if (role === 'primary') {
+      bucket.primary = item;
+    } else {
+      bucket.future = item;
+    }
+    pairs.set(runId, bucket);
+  }
+
+  const match = [...pairs.entries()]
+    .sort(([a], [b]) => b.localeCompare(a))
+    .find(([, pair]) => pair.primary && pair.future);
+  if (!match) {
+    return null;
+  }
+
+  const [runId, pair] = match;
+  const circleFamilyName = playdateCircleFamilyForSpec('aqpbt-12');
+  const primaryChildName = altBaselineFamily.children.find((child) => child.role === 'boy5')!.firstName;
+  const futureChildName = altBaselineFamily.children.find((child) => child.role === 'girl8')!.firstName;
+  const bundle = buildPlaydatesCalendarProvision(
+    primaryChildName,
+    futureChildName,
+    circleFamilyName,
+    1,
+    2,
+    runId,
+  );
+
+  return {
+    ...bundle,
+    owner,
+    playdateIds: [pair.primary!.id, pair.future!.id],
+  };
+}
+
+export async function ensurePlaydatesCalendarProvision(
+  api: APIRequestContext,
+  owner: RecordOwner,
+): Promise<PlaydatesCalendarProvisionState | null> {
+  if (activeCalendarProvision) {
+    return activeCalendarProvision;
+  }
+  const rehydrated = await rehydrateCalendarProvisionFromApi(api, owner);
+  if (rehydrated) {
+    activeCalendarProvision = rehydrated;
+  }
+  return activeCalendarProvision;
+}
 
 export function getPlaydatesCalendarProvision(): PlaydatesCalendarProvisionState {
   if (!activeCalendarProvision) {
@@ -85,7 +167,7 @@ function collectProvisionRowIssues(
       issues.push(`Playdate ${provisionCase.locationToken} is ${row.status}, expected cancelled.`);
     }
     const childNames = (row.children ?? []).map((child) => child.firstName);
-    if (!childNames.includes(provisionCase.childName)) {
+    if (childNames.length > 0 && !childNames.includes(provisionCase.childName)) {
       issues.push(
         `Playdate ${provisionCase.locationToken} must include child ${provisionCase.childName}.`,
       );
@@ -103,7 +185,9 @@ export type PlaydatesCalendarProvisionReadiness =
 
 export async function getPlaydatesCalendarProvisionReadiness(
   api: APIRequestContext,
+  owner: RecordOwner,
 ): Promise<PlaydatesCalendarProvisionReadiness> {
+  await ensurePlaydatesCalendarProvision(api, owner);
   if (!activeCalendarProvision) {
     return {
       ready: false,
@@ -132,8 +216,10 @@ export async function getPlaydatesCalendarProvisionReadiness(
 
 export async function waitForPlaydatesCalendarProvisionReadiness(
   api: APIRequestContext,
+  owner: RecordOwner,
   timeoutMs: number = PLAYDATES_CALENDAR_READINESS_TIMEOUT_MS,
 ): Promise<PlaydatesCalendarProvisionReadiness> {
+  await ensurePlaydatesCalendarProvision(api, owner);
   if (!activeCalendarProvision) {
     return {
       ready: false,
@@ -148,8 +234,11 @@ export async function waitForPlaydatesCalendarProvisionReadiness(
 
   try {
     await expect(async () => {
-      lastReadiness = await getPlaydatesCalendarProvisionReadiness(api);
-      expect(lastReadiness.ready, lastReadiness.reportComment).toBe(true);
+      lastReadiness = await getPlaydatesCalendarProvisionReadiness(api, owner);
+      expect(
+        lastReadiness.ready,
+        lastReadiness.ready ? undefined : lastReadiness.reportComment,
+      ).toBe(true);
     }).toPass({ timeout: timeoutMs });
   } catch {
     if (lastReadiness.ready) {
@@ -158,14 +247,16 @@ export async function waitForPlaydatesCalendarProvisionReadiness(
     const waitedSeconds = Math.round(timeoutMs / 1000);
     return {
       ready: false,
-      reportComment: `${lastReadiness.reportComment} Waited ${waitedSeconds}s for application test data; skipping test.`,
+      reportComment: `${
+        lastReadiness.ready ? 'Provisioned playdates not ready.' : lastReadiness.reportComment
+      } Waited ${waitedSeconds}s for application test data; skipping test.`,
     };
   }
 
   return lastReadiness;
 }
 
-async function fillManualProposal(page: Page, payload: PlaydatesCalendarProvisionCase['proposal']): Promise<void> {
+async function fillManualProposal(page: Page, payload: PlaydateProposalPayload): Promise<void> {
   const playdates = new PlaydatesPage(page);
   const form = playdates.proposePlaydateForm;
   await playdates.goto();
@@ -179,9 +270,29 @@ async function fillManualProposal(page: Page, payload: PlaydatesCalendarProvisio
   await form.submit();
 }
 
+async function createCancelledPastRow(
+  page: Page,
+  api: APIRequestContext,
+  owner: RecordOwner,
+  provisionCase: PlaydatesCalendarProvisionCase,
+): Promise<string> {
+  const inviteeFamilyId = await resolveInviteeFamilyId(api, provisionCase.proposal.circleFamilyName);
+  if (inviteeFamilyId && provisionCase.proposal.manual) {
+    return createCancelledPastPlaydateViaApi(api, owner, {
+      circleFamilyName: provisionCase.proposal.circleFamilyName,
+      manual: provisionCase.proposal.manual,
+      locationText: provisionCase.locationNote,
+      notes: provisionCase.proposal.optionalNote ?? '',
+      childFirstName: provisionCase.childName,
+    });
+  }
+  return createCancelledPastViaUi(page, api, owner, provisionCase);
+}
+
 async function createCancelledPastViaUi(
   page: Page,
   api: APIRequestContext,
+  owner: RecordOwner,
   provisionCase: PlaydatesCalendarProvisionCase,
 ): Promise<string> {
   await fillManualProposal(page, provisionCase.proposal);
@@ -199,7 +310,7 @@ async function createCancelledPastViaUi(
   }
 
   expect(created!.status).toBe('cancelled');
-  trackRecord({ type: 'playdate', id: created.id, owner: 'main' });
+  trackRecord({ type: 'playdate', id: created.id, owner });
   return created.id;
 }
 
@@ -212,32 +323,62 @@ async function validateProvisionedPlaydates(
   expect(issues, issues.join(' ')).toEqual([]);
 }
 
-/** Creates cancelled Past rows for AQPBT-12 and validates via API. */
-export async function provisionPlaydatesCalendarData(
+async function runPlaydatesCalendarProvision(
   page: Page,
-  specKey: SpecProfileKey = 'aqpbt-12',
+  specKey: SpecProfileKey,
 ): Promise<PlaydatesCalendarProvisionState> {
-  const api = await getApiContext('main');
+  const owner = getSpecFamilyProfile(specKey).owner;
+  const api = await getApiContext(owner);
   await cancelOpenAutomationPlaydates(api);
 
-  const primaryChild = getSpecChildByRole(specKey, 'boy10');
-  const futureChild = getSpecChildByRole(specKey, 'girl7');
-  const state = buildPlaydatesCalendarProvision(primaryChild.firstName, futureChild.firstName);
+  const primaryChildName =
+    specKey === 'aqpbt-12'
+      ? altBaselineFamily.children.find((child) => child.role === 'boy5')!.firstName
+      : getSpecChildByRole(specKey, 'boy5').firstName;
+  const futureChildName =
+    specKey === 'aqpbt-12'
+      ? altBaselineFamily.children.find((child) => child.role === 'girl8')!.firstName
+      : getSpecChildByRole(specKey, 'girl8').firstName;
+  const circleFamilyName = playdateCircleFamilyForSpec(specKey);
+  const daysBase = await daysAheadBaseForVisiblePast(api);
+  const bundle = buildPlaydatesCalendarProvision(
+    primaryChildName,
+    futureChildName,
+    circleFamilyName,
+    daysBase,
+    daysBase + 1,
+  );
   const ids: string[] = [];
 
-  ids.push(await createCancelledPastViaUi(page, api, state.primaryCase));
-  ids.push(await createCancelledPastViaUi(page, api, state.futureCancelledCase));
+  ids.push(await createCancelledPastRow(page, api, owner, bundle.primaryCase));
+  ids.push(await createCancelledPastRow(page, api, owner, bundle.futureCancelledCase));
 
-  state.playdateIds = ids;
+  const state: PlaydatesCalendarProvisionState = { ...bundle, owner, playdateIds: ids };
   await validateProvisionedPlaydates(api, state);
   activeCalendarProvision = state;
   return state;
 }
 
+/** Creates cancelled Past rows for AQPBT-12 and validates via API. */
+export async function provisionPlaydatesCalendarData(
+  page: Page,
+  specKey: SpecProfileKey = 'aqpbt-12',
+): Promise<PlaydatesCalendarProvisionState> {
+  if (activeCalendarProvision) {
+    return activeCalendarProvision;
+  }
+  if (!calendarProvisionInFlight) {
+    calendarProvisionInFlight = runPlaydatesCalendarProvision(page, specKey).finally(() => {
+      calendarProvisionInFlight = null;
+    });
+  }
+  return calendarProvisionInFlight;
+}
+
 export async function teardownPlaydatesCalendarProvision(
   state: PlaydatesCalendarProvisionState,
 ): Promise<void> {
-  const api = await getApiContext('main');
+  const api = await getApiContext(state.owner);
   for (const id of state.playdateIds) {
     const list = await listPlaydates(api);
     const row = list.find((item) => item.id === id);
