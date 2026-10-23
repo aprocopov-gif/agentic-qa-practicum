@@ -59,7 +59,11 @@ export class PlaydatesPage {
 
   /** Locator for a Past row that includes the family name and Cancelled status. */
   cancelledPastRow(familyName: string): Locator {
-    return this.page.locator('div').filter({ hasText: familyName }).filter({ hasText: 'Cancelled' }).first();
+    return this.page
+      .locator('div')
+      .filter({ hasText: familyName })
+      .filter({ hasText: 'Cancelled' })
+      .last();
   }
 
   /** Locator for a Past row that includes the given date-time fragment. */
@@ -67,9 +71,23 @@ export class PlaydatesPage {
     return this.page.getByText(dateTimeFragment).locator('..').locator('..');
   }
 
+  /** Locator for a cancelled Past row that includes a unique location token from provisioned data. */
+  cancelledPastRowByLocationToken(locationToken: string): Locator {
+    return this.page
+      .locator('div')
+      .filter({ hasText: locationToken })
+      .filter({ hasText: 'Cancelled' })
+      .first();
+  }
+
   /** Opens a cancelled Past row by family name. */
   async viewCancelledPastRow(familyName: string): Promise<void> {
     await this.cancelledPastRow(familyName).click();
+  }
+
+  /** Opens a cancelled Past row that includes the provision location token. */
+  async viewCancelledPastRowByLocationToken(locationToken: string): Promise<void> {
+    await this.cancelledPastRowByLocationToken(locationToken).click();
   }
 
   /** Google calendar link scoped to a playdate row. */

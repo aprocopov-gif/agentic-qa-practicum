@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures/cleanup.fixture';
 import { AvailabilityPage } from '../pages/availability.page';
+import { installSpecFamilyProvisioning } from '../support/spec-family-hooks';
 import {
   AvailabilityCopy,
   WeekendAfternoonWindow,
@@ -10,6 +11,8 @@ import { AppRoute } from '../test-data/routes';
 const availabilityUrl = new RegExp(`${AppRoute.Availability.replace('/', '\\/')}(\\/|\\?|$)`);
 
 test.describe('AQPBT-8 availability weekend preset (Family A)', () => {
+  installSpecFamilyProvisioning('aqpbt-8');
+
   test('Availability page shows weekly preset and save controls @smoke', async ({ page }) => {
     const availability = new AvailabilityPage(page);
     const weekly = availability.weeklyForm;

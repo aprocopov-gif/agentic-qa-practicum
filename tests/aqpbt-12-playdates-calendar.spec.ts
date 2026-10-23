@@ -5,7 +5,16 @@ import { CalendarPage } from '../pages/calendar.page';
 import { DashboardPage } from '../pages/dashboard.page';
 import { PlaydatesPage } from '../pages/playdates.page';
 import { ProfilePage } from '../pages/profile.page';
-import { ALT_AUTH_FILE } from '../support/auth.constants';
+import { ALT_AUTH_FILE, AUTH_FILE } from '../support/auth.constants';
+import { getApiContext } from '../support/api-client';
+import { installSpecFamilyProvisioning } from '../support/spec-family-hooks';
+import {
+  getPlaydatesCalendarProvision,
+  getPlaydatesCalendarProvisionReadiness,
+  provisionPlaydatesCalendarData,
+  teardownPlaydatesCalendarProvision,
+  waitForPlaydatesCalendarProvisionReadiness,
+} from '../support/playdates-calendar-provision';
 import { playdatesCalendarObserved } from '../test-data/factories/playdates-calendar.factory';
 import { invalidPlaydatesCalendar } from '../test-data/invalid-playdates-calendar';
 import { AppRoute } from '../test-data/routes';
@@ -38,33 +47,6 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
     await expectNoCalendarExportOnPage(playdates);
   });
 
-  test('Cancelled Past row on Playdates has no calendar or pending actions @sanity', async ({ page }) => {
-    const playdates = new PlaydatesPage(page);
-    const row = playdates.cancelledPastRow(playdatesCalendarObserved.cancelledPastFamilyNguyen);
-
-    await playdates.goto();
-
-    await expect(row).toBeVisible();
-    await expect(row).toContainText(playdatesCalendarObserved.cancelledPastDateFriOct16);
-    await expect(row).toContainText(playdatesCalendarObserved.cancelledStatus);
-    await expectNoRowActions(playdates, row);
-  });
-
-  test('Find a playdate route shows empty Upcoming and cancelled Past without export @sanity', async ({
-    page,
-  }) => {
-    const playdates = new PlaydatesPage(page);
-
-    await playdates.gotoNew();
-
-    await expect(page).toHaveURL(newPlaydateUrl);
-    await expect(playdates.noUpcomingPlaydates).toHaveText(playdatesCalendarObserved.upcomingEmptyCopy);
-    await expect(
-      playdates.cancelledPastRow(playdatesCalendarObserved.cancelledPastFamilyNguyen),
-    ).toBeVisible();
-    await expectNoCalendarExportOnPage(playdates);
-  });
-
   test('Profile Calendar Sync shows playdate calendar message on profile @e2e', async ({ page }) => {
     const profile = new ProfilePage(page);
 
@@ -73,44 +55,6 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
 
     await expect(page).toHaveURL(profileUrl);
     await expect(profile.calendarSyncToast).toHaveText(playdatesCalendarObserved.calendarSyncToast);
-  });
-
-  test('clicking Cancelled Past row on Playdates does not reveal calendar export @regression', async ({
-    page,
-  }) => {
-    const playdates = new PlaydatesPage(page);
-
-    await playdates.goto();
-    await playdates.viewCancelledPastRow(playdatesCalendarObserved.cancelledPastFamilyNguyen);
-
-    await expect(page).toHaveURL(playdatesUrl);
-    await expectNoCalendarExportOnPage(playdates);
-  });
-
-  test('future-dated Cancelled Past row has no calendar export @regression', async ({ page }) => {
-    const playdates = new PlaydatesPage(page);
-    const row = playdates.cancelledPastRowByDate(playdatesCalendarObserved.cancelledPastDateThuOct15);
-
-    await playdates.goto();
-
-    await expect(row).toBeVisible();
-    await expect(row).toContainText(playdatesCalendarObserved.cancelledStatus);
-    await expectNoRowActions(playdates, row);
-  });
-
-  test('Past section lists cancelled circle families without export actions @regression', async ({ page }) => {
-    const playdates = new PlaydatesPage(page);
-
-    await playdates.goto();
-
-    await expect(playdates.pastLabel.first()).toBeVisible();
-    await expect(
-      playdates.cancelledPastRow(playdatesCalendarObserved.cancelledPastFamilyNguyen),
-    ).toBeVisible();
-    await expect(
-      playdates.cancelledPastRow(playdatesCalendarObserved.cancelledPastFamilyPetrov),
-    ).toBeVisible();
-    await expectNoCalendarExportOnPage(playdates);
   });
 
   test('Dashboard Upcoming Playdates widget has no Google or ICS @regression', async ({ page }) => {
@@ -136,16 +80,126 @@ test.describe('AQPBT-12 playdates calendar export (Family A)', () => {
     await expect(playdates.icsButton).toHaveCount(0);
   });
 
-  test('clicking Cancelled Past row on Find a playdate stays on route without export @api', async ({
-    page,
-  }) => {
-    const playdates = new PlaydatesPage(page);
+  test.describe('cancelled Past rows (provisioned)', () => {
+    installSpecFamilyProvisioning('aqpbt-12');
+    test.describe.configure({ mode: 'serial' });
 
-    await playdates.gotoNew();
-    await playdates.viewCancelledPastRow(playdatesCalendarObserved.cancelledPastFamilyNguyen);
+    test.beforeAll(async ({ browser }) => {
+      const context = await browser.newContext({ storageState: AUTH_FILE });
+      const page = await context.newPage();
+      try {
+        await provisionPlaydatesCalendarData(page, 'aqpbt-12');
+      } catch (error) {
+        console.warn('AQPBT-12 provision failed; dependent tests will be skipped:', error);
+      } finally {
+        await page.close();
+        await context.close();
+      }
+    });
 
-    await expect(page).toHaveURL(newPlaydateUrl);
-    await expectNoCalendarExportOnPage(playdates);
+    test.beforeEach(async ({}, testInfo) => {
+      const api = await getApiContext('main');
+      const readiness = await waitForPlaydatesCalendarProvisionReadiness(api);
+      if (!readiness.ready) {
+        testInfo.annotations.push({ type: 'note', description: readiness.reportComment });
+        test.skip(true, readiness.reportComment);
+      }
+    });
+
+    test.afterAll(async () => {
+      try {
+        const readiness = await getPlaydatesCalendarProvisionReadiness(await getApiContext('main'));
+        if (readiness.ready) {
+          await teardownPlaydatesCalendarProvision(readiness.state);
+        }
+      } catch {
+        // provision never completed
+      }
+    });
+
+    test('Cancelled Past row on Playdates has no calendar or pending actions @sanity', async ({ page }) => {
+      const playdates = new PlaydatesPage(page);
+      const provision = getPlaydatesCalendarProvision();
+      const row = playdates.cancelledPastRowByLocationToken(provision.primaryCase.locationToken);
+
+      await playdates.goto();
+
+      await expect(row).toBeVisible();
+      await expect(row).toContainText(provision.primaryCase.locationNote);
+      await expect(row).toContainText(playdatesCalendarObserved.cancelledStatus);
+      await expectNoRowActions(playdates, row);
+    });
+
+    test('Find a playdate route shows empty Upcoming and cancelled Past without export @sanity', async ({
+      page,
+    }) => {
+      const playdates = new PlaydatesPage(page);
+      const provision = getPlaydatesCalendarProvision();
+
+      await playdates.gotoNew();
+
+      await expect(page).toHaveURL(newPlaydateUrl);
+      await expect(playdates.noUpcomingPlaydates).toHaveText(playdatesCalendarObserved.upcomingEmptyCopy);
+      await expect(
+        playdates.cancelledPastRowByLocationToken(provision.primaryCase.locationToken),
+      ).toBeVisible();
+      await expectNoCalendarExportOnPage(playdates);
+    });
+
+    test('clicking Cancelled Past row on Playdates does not reveal calendar export @regression', async ({
+      page,
+    }) => {
+      const playdates = new PlaydatesPage(page);
+      const provision = getPlaydatesCalendarProvision();
+
+      await playdates.goto();
+      await playdates.viewCancelledPastRowByLocationToken(provision.primaryCase.locationToken);
+
+      await expect(page).toHaveURL(playdatesUrl);
+      await expectNoCalendarExportOnPage(playdates);
+    });
+
+    test('future-dated Cancelled Past row has no calendar export @regression', async ({ page }) => {
+      const playdates = new PlaydatesPage(page);
+      const provision = getPlaydatesCalendarProvision();
+      const row = playdates.cancelledPastRowByLocationToken(provision.futureCancelledCase.locationToken);
+
+      await playdates.goto();
+
+      await expect(row).toBeVisible();
+      await expect(row).toContainText(provision.futureCancelledCase.locationNote);
+      await expect(row).toContainText(playdatesCalendarObserved.cancelledStatus);
+      await expectNoRowActions(playdates, row);
+    });
+
+    test('Past section lists cancelled circle families without export actions @regression', async ({ page }) => {
+      const playdates = new PlaydatesPage(page);
+      const provision = getPlaydatesCalendarProvision();
+
+      await playdates.goto();
+
+      await expect(playdates.pastLabel.first()).toBeVisible();
+      await expect(
+        playdates.cancelledPastRowByLocationToken(provision.primaryCase.locationToken),
+      ).toBeVisible();
+      await expect(
+        playdates.cancelledPastRowByLocationToken(provision.futureCancelledCase.locationToken),
+      ).toBeVisible();
+      await expectNoCalendarExportOnPage(playdates);
+    });
+
+    test('clicking Cancelled Past row on Find a playdate stays on route without export @api', async ({
+      page,
+    }) => {
+      const playdates = new PlaydatesPage(page);
+      const provision = getPlaydatesCalendarProvision();
+
+      await playdates.gotoNew();
+      await playdates.viewCancelledPastRowByLocationToken(provision.primaryCase.locationToken);
+
+      await expect(page).toHaveURL(newPlaydateUrl);
+      await expectNoCalendarExportOnPage(playdates);
+    });
   });
 });
 

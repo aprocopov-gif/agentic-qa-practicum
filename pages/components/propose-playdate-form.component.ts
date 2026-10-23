@@ -90,6 +90,18 @@ export class ProposePlaydateFormComponent {
     await this.childCheckbox(name).check();
   }
 
+  /** Clears all child checkboxes, then checks only the given names. */
+  async selectOnlyChildren(names: readonly string[]): Promise<void> {
+    const boxes = this.root.getByRole('checkbox');
+    const count = await boxes.count();
+    for (let index = 0; index < count; index += 1) {
+      await boxes.nth(index).uncheck();
+    }
+    for (const name of names) {
+      await this.selectChild(name);
+    }
+  }
+
   /** Clears a child checkbox in the propose form. */
   async unselectChild(name: string): Promise<void> {
     await this.childCheckbox(name).uncheck();

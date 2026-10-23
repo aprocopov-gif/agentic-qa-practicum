@@ -1,6 +1,8 @@
 import { test, expect } from '../fixtures/cleanup.fixture';
 import { PlaydatesPage } from '../pages/playdates.page';
 import { ALT_AUTH_FILE } from '../support/auth.constants';
+import { installSpecFamilyProvisioning } from '../support/spec-family-hooks';
+import { getSpecChildByRole } from '../support/spec-family-provision';
 import { playdatesProposeObserved } from '../test-data/factories/propose-playdate.factory';
 import { invalidPlaydatesPropose } from '../test-data/invalid-playdates-propose';
 import { PlaydateCircleFamily, PlaydatePlaceOption } from '../test-data/playdates-propose.enums';
@@ -10,6 +12,8 @@ const playdatesUrl = new RegExp(`${AppRoute.Playdates.replace('/', '\\/')}(\\/|\
 const newPlaydateUrl = new RegExp(`${AppRoute.NewPlaydate.replace('/', '\\/')}(\\/|\\?|$)`);
 
 test.describe('AQPBT-9 playdates propose form (Family A)', () => {
+  installSpecFamilyProvisioning('aqpbt-9');
+
   test('Playdates shows Find a playdate, Propose, and Send request @smoke', async ({ page }) => {
     const playdates = new PlaydatesPage(page);
 
@@ -69,13 +73,15 @@ test.describe('AQPBT-9 playdates propose form (Family A)', () => {
   test('child checkboxes use my children names and can be changed @regression', async ({ page }) => {
     const playdates = new PlaydatesPage(page);
     const form = playdates.proposePlaydateForm;
+    const girl10 = getSpecChildByRole('aqpbt-9', 'girl10');
+    const girl7 = getSpecChildByRole('aqpbt-9', 'girl7');
 
     await playdates.goto();
-    await form.unselectChild(playdatesProposeObserved.childMia);
+    await form.unselectChild(girl10.firstName);
 
-    await expect(form.childCheckbox(playdatesProposeObserved.childMia)).toBeVisible();
-    await expect(form.childCheckbox(playdatesProposeObserved.childMaria)).toBeVisible();
-    await expect(form.childCheckbox(playdatesProposeObserved.childMia)).not.toBeChecked();
+    await expect(form.childCheckbox(girl10.firstName)).toBeVisible();
+    await expect(form.childCheckbox(girl7.firstName)).toBeVisible();
+    await expect(form.childCheckbox(girl10.firstName)).not.toBeChecked();
     await expect(page).toHaveURL(playdatesUrl);
   });
 
@@ -137,11 +143,13 @@ test.describe('AQPBT-9 playdates propose form (Family A)', () => {
   test('child checkboxes start checked @regression', async ({ page }) => {
     const playdates = new PlaydatesPage(page);
     const form = playdates.proposePlaydateForm;
+    const girl10 = getSpecChildByRole('aqpbt-9', 'girl10');
+    const girl7 = getSpecChildByRole('aqpbt-9', 'girl7');
 
     await playdates.goto();
 
-    await expect(form.childCheckbox(playdatesProposeObserved.childMia)).toBeChecked();
-    await expect(form.childCheckbox(playdatesProposeObserved.childMaria)).toBeChecked();
+    await expect(form.childCheckbox(girl10.firstName)).toBeChecked();
+    await expect(form.childCheckbox(girl7.firstName)).toBeChecked();
   });
 });
 

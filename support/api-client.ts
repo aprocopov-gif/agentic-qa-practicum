@@ -90,6 +90,44 @@ async function readErrorMessage(response: APIResponse): Promise<string> {
   }
 }
 
+export interface CreateChildPayload {
+  firstName: string;
+  birthYear: number;
+  birthMonth: number;
+  avatarKey: string;
+  interests: string[];
+  gender?: string;
+}
+
+export interface CreateChildResult {
+  id: string;
+  firstName: string;
+  ok: boolean;
+  status: number;
+  message: string;
+}
+
+/** Creates one child (discovery: POST /api/v1/children). */
+export async function createChild(
+  apiContext: APIRequestContext,
+  payload: CreateChildPayload,
+): Promise<CreateChildResult> {
+  const response = await apiContext.post(CHILDREN_PATH, { data: payload });
+  const ok = response.ok();
+  const message = ok ? '' : await readErrorMessage(response);
+  if (!ok) {
+    return { id: '', firstName: payload.firstName, ok, status: response.status(), message };
+  }
+  const body = (await response.json()) as { id: string; firstName: string };
+  return {
+    id: body.id,
+    firstName: body.firstName,
+    ok,
+    status: response.status(),
+    message,
+  };
+}
+
 /** Deletes one child (discovery: DELETE /api/v1/children/{id}). */
 export async function deleteChild(apiContext: APIRequestContext, id: string): Promise<DeleteRecordResult> {
   const response = await apiContext.delete(`${CHILDREN_PATH}/${id}`);
@@ -126,8 +164,10 @@ export async function deleteAvailabilityException(
 /** Cancels one playdate (discovery: POST /api/v1/playdates/{id}/cancel). */
 export async function cancelPlaydate(apiContext: APIRequestContext, id: string): Promise<DeleteRecordResult> {
   const response = await apiContext.post(`${PLAYDATES_PATH}/${id}/cancel`);
-  const ok = response.ok();
-  const message = ok ? '' : await readErrorMessage(response);
+  const message = response.ok() ? '' : await readErrorMessage(response);
+  const ok =
+    response.ok() ||
+    (response.status() === 400 && message.includes('cannot be cancelled'));
 
   return {
     type: 'playdate',

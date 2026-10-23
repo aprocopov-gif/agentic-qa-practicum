@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures/cleanup.fixture';
 import { FriendsPage } from '../pages/friends.page';
+import { installSpecFamilyProvisioning } from '../support/spec-family-hooks';
 import { PlaydateCircleFamily } from '../test-data/playdates-propose.enums';
 import { AppRoute } from '../test-data/routes';
 
@@ -21,6 +22,8 @@ async function expectManageActionsVisible(friends: FriendsPage): Promise<void> {
 }
 
 test.describe('AQPBT-14 friends manage connection (Family A)', () => {
+  installSpecFamilyProvisioning('aqpbt-14');
+
   test('Friends lists circle cards with Schedule Playdate and manage @smoke', async ({ page }) => {
     const friends = new FriendsPage(page);
 

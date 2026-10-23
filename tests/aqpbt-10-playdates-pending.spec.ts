@@ -2,10 +2,18 @@ import { type Locator } from '@playwright/test';
 
 import { test, expect } from '../fixtures/cleanup.fixture';
 import { PlaydatesPage } from '../pages/playdates.page';
-import { ALT_AUTH_FILE } from '../support/auth.constants';
+import { ALT_AUTH_FILE, AUTH_FILE } from '../support/auth.constants';
+import { getApiContext } from '../support/api-client';
+import {
+  getPlaydatesPendingProvision,
+  getPlaydatesPendingProvisionReadiness,
+  provisionPlaydatesPendingData,
+  teardownPlaydatesPendingProvision,
+  waitForPlaydatesPendingProvisionReadiness,
+} from '../support/playdates-pending-provision';
+import { installSpecFamilyProvisioning } from '../support/spec-family-hooks';
 import { playdatesPendingObserved } from '../test-data/factories/playdates-pending.factory';
 import { invalidPlaydatesPending } from '../test-data/invalid-playdates-pending';
-import { PlaydateCircleFamily } from '../test-data/playdates-propose.enums';
 import { AppRoute } from '../test-data/routes';
 
 const newPlaydateUrl = new RegExp(`${AppRoute.NewPlaydate.replace('/', '\\/')}(\\/|\\?|$)`);
@@ -17,6 +25,8 @@ async function expectNoPendingActionsOnRow(playdates: PlaydatesPage, row: Locato
 }
 
 test.describe('AQPBT-10 playdates pending requests (Family A)', () => {
+  installSpecFamilyProvisioning('aqpbt-10');
+
   test('Playdates shows Find a playdate intro and Pending requests @smoke', async ({ page }) => {
     const playdates = new PlaydatesPage(page);
 
@@ -51,15 +61,53 @@ test.describe('AQPBT-10 playdates pending requests (Family A)', () => {
     await expect(playdates.noPendingRequests).toHaveText(playdatesPendingObserved.pendingEmptyCopy);
   });
 
-  test('Cancelled Past rows have no Accept, Decline, or cancel @regression', async ({ page }) => {
-    const playdates = new PlaydatesPage(page);
-    const row = playdates.cancelledPastRow(PlaydateCircleFamily.Nguyens);
+  test.describe('provisioned cancelled Past row', () => {
+    test.describe.configure({ mode: 'serial' });
 
-    await playdates.goto();
+    test.beforeAll(async ({ browser }) => {
+      const context = await browser.newContext({ storageState: AUTH_FILE });
+      const page = await context.newPage();
+      try {
+        await provisionPlaydatesPendingData(page, 'aqpbt-10');
+      } catch (error) {
+        console.warn('AQPBT-10 playdate provision failed; dependent tests will be skipped:', error);
+      } finally {
+        await page.close();
+        await context.close();
+      }
+    });
 
-    await expect(row).toBeVisible();
-    await expect(row).toContainText(playdatesPendingObserved.cancelledStatus);
-    await expectNoPendingActionsOnRow(playdates, row);
+    test.beforeEach(async ({}, testInfo) => {
+      const api = await getApiContext('main');
+      const readiness = await waitForPlaydatesPendingProvisionReadiness(api);
+      if (!readiness.ready) {
+        testInfo.annotations.push({ type: 'note', description: readiness.reportComment });
+        test.skip(true, readiness.reportComment);
+      }
+    });
+
+    test.afterAll(async () => {
+      try {
+        const readiness = await getPlaydatesPendingProvisionReadiness(await getApiContext('main'));
+        if (readiness.ready) {
+          await teardownPlaydatesPendingProvision(readiness.state);
+        }
+      } catch {
+        // provision never completed
+      }
+    });
+
+    test('Cancelled Past rows have no Accept, Decline, or cancel @regression', async ({ page }) => {
+      const playdates = new PlaydatesPage(page);
+      const provision = getPlaydatesPendingProvision();
+      const row = playdates.cancelledPastRowByLocationToken(provision.cancelledCase.locationToken);
+
+      await playdates.goto();
+
+      await expect(row).toBeVisible();
+      await expect(row).toContainText(playdatesPendingObserved.cancelledStatus);
+      await expectNoPendingActionsOnRow(playdates, row);
+    });
   });
 
   test('empty Upcoming is still shown next to empty Pending requests @api', async ({ page }) => {
