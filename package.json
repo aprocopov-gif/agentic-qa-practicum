@@ -27,6 +27,7 @@
   "homepage": "https://github.com/aprocopov-gif/agentic-qa-practicum#readme",
   "devDependencies": {
     "@playwright/test": "^1.63.0",
+    "@types/node": "^20.19.43",
     "tsx": "^4.20.6"
   },
   "dependencies": {
