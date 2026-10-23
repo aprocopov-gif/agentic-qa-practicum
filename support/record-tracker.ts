@@ -31,6 +31,26 @@ export function trackRecord(record: TrackedRecord): void {
   fs.appendFileSync(filePath, `${JSON.stringify(record)}\n`, 'utf8');
 }
 
+/** Drops a record from the tracker after inline or spec teardown removed it. */
+export function untrackRecord(record: Pick<TrackedRecord, 'type' | 'id'>): void {
+  const filePath = trackerAbsolutePath();
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const key = `${record.type}:${record.id}`;
+  const kept = fs
+    .readFileSync(filePath, 'utf8')
+    .split('\n')
+    .filter((line) => line.trim())
+    .filter((line) => {
+      const parsed = JSON.parse(line) as TrackedRecord;
+      return `${parsed.type}:${parsed.id}` !== key;
+    });
+
+  fs.writeFileSync(filePath, kept.length > 0 ? `${kept.join('\n')}\n` : '', 'utf8');
+}
+
 /** Returns tracked records, deduplicated by type and id (last owner wins). */
 export function getTrackedRecords(): TrackedRecord[] {
   const filePath = trackerAbsolutePath();

@@ -16,7 +16,11 @@ export async function cleanupCreatedRecords(): Promise<void> {
       const result = await deleteTrackedRecord(apiContext, record);
 
       if (result.ok) {
-        console.log(`Deleted ${result.type} ${result.id}`);
+        if (result.status === 404) {
+          console.log(`Already removed ${result.type} ${result.id}`);
+        } else {
+          console.log(`Deleted ${result.type} ${result.id}`);
+        }
       } else {
         console.warn(
           `Failed to delete ${result.type} ${result.id}: HTTP ${result.status}${result.message ? ` — ${result.message}` : ''}`,

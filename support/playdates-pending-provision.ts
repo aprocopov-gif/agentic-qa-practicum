@@ -9,9 +9,9 @@ import type { SpecProfileKey } from '../test-data/spec-profiles';
 import { cancelPlaydate, getApiContext } from './api-client';
 import { getSpecChildByRole } from './spec-family-provision';
 import { trackRecord } from './record-tracker';
+import { cancelOpenAutomationPlaydates } from './playdates-provision-cleanup';
 
 const PLAYDATES_PATH = '/api/v1/playdates';
-const PROVISION_TOKEN_PREFIX = 'AQPBT10-';
 
 export const PLAYDATES_PENDING_TEST_DATA_NOT_READY = 'Test data is not ready';
 export const PLAYDATES_PENDING_READINESS_TIMEOUT_MS = 15_000;
@@ -170,23 +170,12 @@ async function createCancelledPastViaUi(
   return created.id;
 }
 
-async function cancelOpenProvisionPlaydates(api: APIRequestContext): Promise<void> {
-  const list = await listPlaydates(api);
-  for (const item of list) {
-    const haystack = `${item.locationText ?? ''} ${item.notes ?? ''}`;
-    if (!haystack.includes(PROVISION_TOKEN_PREFIX) || item.status === 'cancelled') {
-      continue;
-    }
-    await cancelPlaydate(api, item.id);
-  }
-}
-
 export async function provisionPlaydatesPendingData(
   page: Page,
   specKey: SpecProfileKey = 'aqpbt-10',
 ): Promise<PlaydatesPendingProvisionState> {
   const api = await getApiContext('main');
-  await cancelOpenProvisionPlaydates(api);
+  await cancelOpenAutomationPlaydates(api);
   const child = getSpecChildByRole(specKey, 'boy10');
   const state = buildPlaydatesPendingProvision(child.firstName);
   const id = await createCancelledPastViaUi(page, api, state.cancelledCase);

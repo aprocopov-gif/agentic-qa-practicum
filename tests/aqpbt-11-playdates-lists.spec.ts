@@ -17,6 +17,7 @@ import {
 } from '../support/playdates-lists-provision';
 import { playdatesListsObserved } from '../test-data/factories/playdates-lists.factory';
 import { invalidPlaydatesLists } from '../test-data/invalid-playdates-lists';
+import { FAMILY_A_PLAYDATES_PROVISION_LOCK } from '../support/playdates-provision.constants';
 import { AppRoute } from '../test-data/routes';
 
 const playdatesUrl = new RegExp(`${AppRoute.Playdates.replace('/', '\\/')}(\\/|\\?|$)`);
@@ -32,7 +33,7 @@ async function expectNoRowActions(playdates: PlaydatesPage, row: Locator): Promi
 
 test.describe('AQPBT-11 playdates upcoming and past lists (Family A)', () => {
   installSpecFamilyProvisioning('aqpbt-11');
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: 'serial', lock: FAMILY_A_PLAYDATES_PROVISION_LOCK });
 
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext({ storageState: AUTH_FILE });

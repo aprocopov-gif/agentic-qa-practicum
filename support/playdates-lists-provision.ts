@@ -10,9 +10,9 @@ import {
 import type { SpecProfileKey } from '../test-data/spec-profiles';
 import { getSpecChildByRole } from './spec-family-provision';
 import type { PlaydateProposalPayload } from '../test-data/factories/propose-playdate.factory';
+import { cancelOpenAutomationPlaydates } from './playdates-provision-cleanup';
 
 const PLAYDATES_PATH = '/api/v1/playdates';
-const PROVISION_TOKEN_PREFIX = 'AQPBT11-';
 
 /** Shown in Playwright reports when step 2 validation fails and tests are skipped. */
 export const PLAYDATES_LISTS_TEST_DATA_NOT_READY = 'Test data is not ready';
@@ -231,32 +231,13 @@ async function createCancelledPastViaUi(
   return created.id;
 }
 
-function isProvisionPlaydate(item: PlaydateListItem): boolean {
-  const haystack = `${item.locationText ?? ''} ${item.notes ?? ''}`;
-  return haystack.includes(PROVISION_TOKEN_PREFIX);
-}
-
-/** Cancels open AQPBT11 proposals so Past is not blocked by stale Pending rows. */
-async function cancelOpenProvisionPlaydates(api: APIRequestContext): Promise<void> {
-  const list = await listPlaydates(api);
-  for (const item of list) {
-    if (!isProvisionPlaydate(item)) {
-      continue;
-    }
-    if (item.status === 'cancelled') {
-      continue;
-    }
-    await cancelPlaydate(api, item.id);
-  }
-}
-
 /** Creates Mia and Maria cancelled Past rows, validates, and stores locators for specs. */
 export async function provisionPlaydatesListsData(
   page: Page,
   specKey: SpecProfileKey = 'aqpbt-11',
 ): Promise<PlaydatesListsProvisionState> {
   const api = await getApiContext('main');
-  await cancelOpenProvisionPlaydates(api);
+  await cancelOpenAutomationPlaydates(api);
 
   const primaryChild = getSpecChildByRole(specKey, 'girl10');
   const secondaryChild = getSpecChildByRole(specKey, 'girl7');
