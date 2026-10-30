@@ -1,118 +1,110 @@
 {
-  "requestCount": 20,
-  "stoppedOn5xx": false,
-  "safetyStops": [],
-  "ownerFollowUp": {
-    "endpoint": "GET /api/v1/me",
-    "who": "familyA",
-    "status": 200,
-    "createdChildStillPresent": true
-  },
+  "generatedAt": "2026-10-30T02:02:39.383Z",
+  "tickets": [
+    "AQPBT-8",
+    "AQPBT-9",
+    "AQPBT-10",
+    "AQPBT-11",
+    "AQPBT-12",
+    "AQPBT-14"
+  ],
+  "requestCount": 18,
   "attempts": [
     {
-      "endpoint": "GET /api/v1/me",
-      "who": "familyB",
-      "status": 200,
-      "outcome": "HELD",
-      "evidence": "Family B GET /me was 200; family.id differed from Family A; created child id absent from family.children; owner follow-up still listed the child"
-    },
-    {
-      "endpoint": "GET /api/v1/me",
-      "who": "anonymous",
-      "status": 401,
-      "outcome": "HELD",
-      "evidence": "Unauthenticated GET /me was 401; created child id not in body; owner follow-up still listed the child"
-    },
-    {
-      "endpoint": "GET /api/v1/connections",
-      "who": "familyB",
-      "status": 200,
-      "outcome": "undocumented",
-      "evidence": "Family B GET /connections included the created child id; catalog does not say whether Friends share a connected family’s children"
-    },
-    {
+      "ticket": "AQPBT-8",
       "endpoint": "GET /api/v1/availability",
       "who": "familyB",
       "status": 200,
       "outcome": "HELD",
-      "evidence": "Family B GET /availability was 200; created child id absent from body; owner follow-up still listed the child"
+      "evidence": "Family B GET /api/v1/availability status 200; child id absent when 200"
     },
     {
-      "endpoint": "GET /api/v1/playdates",
-      "who": "familyB",
-      "status": 200,
+      "ticket": "AQPBT-8",
+      "endpoint": "GET /api/v1/availability",
+      "who": "anonymous",
+      "status": 401,
       "outcome": "HELD",
-      "evidence": "Family B GET /playdates was 200; created child id absent; owner follow-up still listed the child"
+      "evidence": "Anonymous GET /api/v1/availability status 401"
     },
     {
-      "endpoint": "GET /api/v1/communities",
-      "who": "familyB",
-      "status": 200,
-      "outcome": "HELD",
-      "evidence": "Family B GET /communities was 200 (caller-scoped list); created child id absent; owner follow-up still listed the child"
-    },
-    {
+      "ticket": "AQPBT-9",
       "endpoint": "GET /api/v1/matches",
       "who": "familyB",
       "status": 200,
       "outcome": "HELD",
-      "evidence": "Family B GET /matches was 200; created child id absent; owner follow-up still listed the child"
+      "evidence": "Family B GET /api/v1/matches status 200; child id absent when 200"
     },
     {
-      "endpoint": "GET /api/v1/events",
+      "ticket": "AQPBT-9",
+      "endpoint": "GET /api/v1/matches",
+      "who": "anonymous",
+      "status": 401,
+      "outcome": "HELD",
+      "evidence": "Anonymous GET /api/v1/matches status 401"
+    },
+    {
+      "ticket": "AQPBT-10",
+      "endpoint": "GET /api/v1/playdates",
       "who": "familyB",
       "status": 200,
       "outcome": "HELD",
-      "evidence": "Family B GET /events was 200; created child id absent; owner follow-up still listed the child"
+      "evidence": "Family B GET /api/v1/playdates status 200; child id absent when 200"
     },
     {
-      "endpoint": "GET /api/v1/communities/{id}",
-      "who": "familyB",
-      "status": 404,
-      "outcome": "undocumented",
-      "evidence": "Family B GET community detail status 404; catalog does not document cross-family access to /communities/{id}"
-    },
-    {
-      "endpoint": "GET /api/v1/communities/{id}",
+      "ticket": "AQPBT-10",
+      "endpoint": "GET /api/v1/playdates",
       "who": "anonymous",
       "status": 401,
       "outcome": "HELD",
-      "evidence": "Unauthenticated GET /communities/{id} was 401; owner follow-up still listed the child"
+      "evidence": "Anonymous GET /api/v1/playdates status 401"
     },
     {
-      "endpoint": "GET /api/v1/events/{id}/ics",
+      "ticket": "AQPBT-11",
+      "endpoint": "GET /api/v1/playdates",
       "who": "familyB",
-      "status": 404,
-      "outcome": "undocumented",
-      "evidence": "Family B GET /events/{id}/ics status 404; catalog marks auth as unknown"
+      "status": 200,
+      "outcome": "HELD",
+      "evidence": "Family B GET /api/v1/playdates status 200; child id absent when 200"
     },
     {
-      "endpoint": "GET /api/v1/events/{id}/ics",
+      "ticket": "AQPBT-11",
+      "endpoint": "GET /api/v1/playdates",
       "who": "anonymous",
       "status": 401,
-      "outcome": "undocumented",
-      "evidence": "Anonymous GET /events/{id}/ics status 401; catalog marks auth as unknown"
+      "outcome": "HELD",
+      "evidence": "Anonymous GET /api/v1/playdates status 401"
     },
     {
+      "ticket": "AQPBT-12",
+      "endpoint": "GET /api/v1/playdates",
+      "who": "familyB",
+      "status": 200,
+      "outcome": "HELD",
+      "evidence": "Family B GET /api/v1/playdates status 200; child id absent when 200"
+    },
+    {
+      "ticket": "AQPBT-12",
+      "endpoint": "GET /api/v1/playdates",
+      "who": "anonymous",
+      "status": 401,
+      "outcome": "HELD",
+      "evidence": "Anonymous GET /api/v1/playdates status 401"
+    },
+    {
+      "ticket": "AQPBT-14",
+      "endpoint": "GET /api/v1/connections",
+      "who": "familyB",
+      "status": 200,
+      "outcome": "undocumented",
+      "evidence": "Family B GET /connections included the created child id; catalog does not define circle child sharing"
+    },
+    {
+      "ticket": "AQPBT-14",
       "endpoint": "GET /api/v1/connections",
       "who": "anonymous",
       "status": 401,
       "outcome": "HELD",
-      "evidence": "Unauthenticated GET /connections was 401; owner follow-up still listed the child"
-    },
-    {
-      "endpoint": "DELETE /api/v1/children/{id}",
-      "who": "familyB",
-      "status": 404,
-      "outcome": "HELD",
-      "evidence": "Family B DELETE status 404; owner follow-up still listed the child"
-    },
-    {
-      "endpoint": "DELETE /api/v1/children/{id}",
-      "who": "anonymous",
-      "status": 401,
-      "outcome": "HELD",
-      "evidence": "Unauthenticated DELETE status 401; owner follow-up still listed the child"
+      "evidence": "Anonymous GET /api/v1/connections status 401"
     }
   ]
 }

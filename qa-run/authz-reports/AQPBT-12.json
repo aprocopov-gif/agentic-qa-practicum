@@ -1,0 +1,24 @@
+{
+  "ticket": "AQPBT-12",
+  "requestCount": 3,
+  "stoppedOn5xx": false,
+  "ownerChildStillPresent": true,
+  "attempts": [
+    {
+      "ticket": "AQPBT-12",
+      "endpoint": "GET /api/v1/playdates",
+      "who": "familyB",
+      "status": 200,
+      "outcome": "HELD",
+      "evidence": "Family B GET /api/v1/playdates status 200; child id absent when 200"
+    },
+    {
+      "ticket": "AQPBT-12",
+      "endpoint": "GET /api/v1/playdates",
+      "who": "anonymous",
+      "status": 401,
+      "outcome": "HELD",
+      "evidence": "Anonymous GET /api/v1/playdates status 401"
+    }
+  ]
+}

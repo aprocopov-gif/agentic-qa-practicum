@@ -1,4 +1,5 @@
 import { getMe, getPlaydates } from '../support/api-client';
+import { expectUnauthenticatedGetRejected } from './authz-probe-helpers';
 import { PlaydateCircleFamily } from '../test-data/playdates-propose.enums';
 import {
   createTrackedChild,
@@ -40,5 +41,13 @@ test(
     const list = await getPlaydates(mainApi);
     const ownerRow = findPlaydateById(list, playdateId);
     expect(ownerRow?.status).not.toBe('cancelled');
+  },
+);
+
+test(
+  'AQPBT-10: unauthenticated GET /playdates is rejected @api',
+  { tag: '@api' },
+  async ({ unauthenticatedApi }) => {
+    await expectUnauthenticatedGetRejected(unauthenticatedApi, PLAYDATES_PATH);
   },
 );

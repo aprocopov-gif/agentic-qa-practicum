@@ -1,6 +1,8 @@
 # Authz probe plan (BuddyTime API)
 
-Written **before any request** in this run. Sources: `api/CATALOG.md` (captured 2026-10-21; authorization notes 2026-10-29), `api/authorization.api.spec.ts`, `api/fixtures.ts`.
+Written **before any request** in the original full-API run. Per-ticket P60 plans: `qa-run/authz-plans/AQPBT-{8,9,10,11,12,14}.md`. Probes run via `api/authz-probe.api.spec.ts`; merged report `qa-run/authz-report.json`.
+
+Sources: `api/CATALOG.md` (captured 2026-10-21; authorization notes 2026-10-29), `api/authorization.api.spec.ts`, `api/fixtures.ts`.
 
 Clients (fixtures, not tokens): Family A = `mainApi`, Family B = `altApi`, no token = `unauthenticatedApi`.
 

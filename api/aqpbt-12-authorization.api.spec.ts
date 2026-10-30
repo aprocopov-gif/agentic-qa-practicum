@@ -1,3 +1,4 @@
+import { expectUnauthenticatedGetRejected } from './authz-probe-helpers';
 import {
   createTrackedChild,
   expectFamilyBGetOmitsCreatedChild,
@@ -14,5 +15,13 @@ test(
     const childId = await createTrackedChild(mainApi);
     await expectFamilyBGetOmitsCreatedChild(altApi, PLAYDATES_PATH, childId);
     await expectOwnerStillHasChild(mainApi, childId);
+  },
+);
+
+test(
+  'AQPBT-12: unauthenticated GET /playdates is rejected @api',
+  { tag: '@api' },
+  async ({ unauthenticatedApi }) => {
+    await expectUnauthenticatedGetRejected(unauthenticatedApi, PLAYDATES_PATH);
   },
 );
