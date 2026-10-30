@@ -26,6 +26,17 @@ export const WeekendAfternoonWindow = {
   end: '17:00',
 } as const;
 
+/** Minutes since midnight for catalog `startMin` / `endMin` fields. */
+export function availabilityMinutesFromTime(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+export const WeekendAfternoonWindowMin = {
+  start: availabilityMinutesFromTime(WeekendAfternoonWindow.start),
+  end: availabilityMinutesFromTime(WeekendAfternoonWindow.end),
+} as const;
+
 export const AvailabilityCopy = {
   banner: 'Availability',
   weeklyHeading: 'Set your weekly free time',
