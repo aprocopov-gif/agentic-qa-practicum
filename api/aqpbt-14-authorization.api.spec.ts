@@ -1,10 +1,6 @@
 import { type ConnectionRow, connectionFamilyNames } from '../support/api-client';
 import { PlaydateCircleFamily } from '../test-data/playdates-propose.enums';
-import {
-  CATALOG_UNAUTHENTICATED_STATUS,
-  expectCatalogJsonResponse,
-  expectJsonObject,
-} from './catalog-contract';
+import { expectCatalogJsonResponse, expectJsonObject } from './catalog-contract';
 import {
   CONNECTIONS_PATH,
   createTrackedChild,
@@ -14,15 +10,6 @@ import {
   ME_PATH,
 } from './authorization-helpers';
 import { expect, test } from './fixtures';
-
-test(
-  'AQPBT-14: unauthenticated GET /connections is rejected @api',
-  { tag: '@api' },
-  async ({ unauthenticatedApi }) => {
-    const response = await unauthenticatedApi.get(CONNECTIONS_PATH);
-    await expectCatalogJsonResponse(response, CATALOG_UNAUTHENTICATED_STATUS);
-  },
-);
 
 test(
   'AQPBT-14: Family A circle list and Family B /me omit family A child @api',

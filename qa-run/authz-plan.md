@@ -1,6 +1,6 @@
 # Authz probe plan (BuddyTime API)
 
-Written **before any request** in the original full-API run. Per-ticket P60 plans: `qa-run/authz-plans/AQPBT-{8,9,10,11,12,14}.md`. Probes run via `api/authz-probe.api.spec.ts`; merged report `qa-run/authz-report.json`.
+Written **before any request** in the original full-API run. Per-ticket P60 plans: `qa-run/authz-plans/AQPBT-{8,9,10,11,12,14}.md`. HELD probe checks promoted to `api/authorization.api.spec.ts`; historical merged report `qa-run/authz-report.json`.
 
 Sources: `api/CATALOG.md` (captured 2026-10-21; authorization notes 2026-10-29), `api/authorization.api.spec.ts`, `api/fixtures.ts`.
 
@@ -88,4 +88,4 @@ If community or event ids are missing, those slots go to anonymous list GETs (ca
 
 ## Spec
 
-All attempts live in `api/authz-probe.api.spec.ts` (one `test()` so parallel workers cannot exceed 20 requests). Tag: `{ tag: '@api' }` on the test only. Run: `npx playwright test api/authz-probe.api.spec.ts --project=api`.
+Permanent HELD coverage lives in `api/authorization.api.spec.ts` (plus ticket-specific extras in `api/aqpbt-10-authorization.api.spec.ts` and `api/aqpbt-14-authorization.api.spec.ts`). Run: `npx playwright test api/authorization.api.spec.ts api/aqpbt-*-authorization.api.spec.ts --project=api`.

@@ -13,7 +13,11 @@ import {
 } from '../support/playdates-provision-api';
 import type { RecordOwner } from '../support/record-tracker';
 import { PlaydateCircleFamily } from '../test-data/playdates-propose.enums';
-import { expectCatalogJsonResponse, expectJsonObject } from './catalog-contract';
+import {
+  CATALOG_UNAUTHENTICATED_STATUS,
+  expectCatalogJsonResponse,
+  expectJsonObject,
+} from './catalog-contract';
 import { trackRecord } from './fixtures';
 
 export const ME_PATH = '/api/v1/me';
@@ -82,6 +86,14 @@ export async function expectFamilyBGetOmitsCreatedChild(
   const response = await altApi.get(path);
   expect(response.status()).toBe(200);
   expect(jsonContainsExactString(await response.json(), childId)).toBe(false);
+}
+
+/** Catalog expects 401 when Authorization is omitted on GET list endpoints. */
+export async function expectUnauthenticatedGetRejected(
+  unauthenticatedApi: APIRequestContext,
+  path: string,
+): Promise<void> {
+  await expectCatalogJsonResponse(await unauthenticatedApi.get(path), CATALOG_UNAUTHENTICATED_STATUS);
 }
 
 function manualTimeDaysAhead(daysAhead: number): { date: string; startTime: string; endTime: string } {
