@@ -48,6 +48,12 @@ Executed **2026-10-29** via `api/authorization.api.spec.ts` (main family = Famil
 | Same `DELETE`, no Bearer token | **401** | executed |
 | After failed cross-family or unauthenticated `DELETE`, `GET /api/v1/me` as Family A | **200**; `family.children` still includes that `{id}` | executed |
 | After Family A creates a child, `GET /api/v1/me` as Family B | **200**; `family.children` does not include Family A’s `{id}` | executed |
+| After Family A creates a child, `GET /api/v1/availability` as Family B | **200**; body omits Family A’s `{id}` | executed (AQPBT-8) |
+| After Family A creates a child, `GET /api/v1/matches` as Family B | **200**; body omits Family A’s `{id}` | executed (AQPBT-9) |
+| After Family A creates a child, `GET /api/v1/playdates` as Family B | **200**; body omits Family A’s `{id}` | executed (AQPBT-10/11/12) |
+| `POST /api/v1/playdates/{id}/cancel` where `{id}` belongs to Family A, Bearer token for Family B | **4xx**; Family A row not `cancelled` | executed (AQPBT-10) |
+| `GET /api/v1/connections` as Family A after creating a child | **200**; circle names present; body omits new `{id}` | executed (AQPBT-14) |
+| `GET /api/v1/connections` as Family B (alt) | **200**; includes connected main family name; `/me` omits Family A child `{id}` | executed (AQPBT-14) |
 
 **Not yet tested** (authorization):
 
