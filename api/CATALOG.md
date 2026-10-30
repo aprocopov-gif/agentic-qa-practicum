@@ -38,6 +38,30 @@ Static assets, images, fonts, analytics, and Next.js data routes were excluded. 
 
 **DELETE `/api/v1/children/{id}`** — no request body; **204** with empty response.
 
+## Authorization (two families)
+
+Executed **2026-10-29** via `api/authorization.api.spec.ts` (main family = Family A / `playwright/.auth/user.json`; alt = Family B / `playwright/.auth/alt-user.json`):
+
+| call | status seen | evidence |
+|------|-------------|----------|
+| `DELETE /api/v1/children/{id}` where `{id}` belongs to Family A, Bearer token for Family B | **404** | executed |
+| Same `DELETE`, no Bearer token | **401** | executed |
+| After failed cross-family or unauthenticated `DELETE`, `GET /api/v1/me` as Family A | **200**; `family.children` still includes that `{id}` | executed |
+| After Family A creates a child, `GET /api/v1/me` as Family B | **200**; `family.children` does not include Family A’s `{id}` | executed |
+| After Family A creates a child, `GET /api/v1/availability` as Family B | **200**; body omits Family A’s `{id}` | executed (AQPBT-8) |
+| After Family A creates a child, `GET /api/v1/matches` as Family B | **200**; body omits Family A’s `{id}` | executed (AQPBT-9) |
+| After Family A creates a child, `GET /api/v1/playdates` as Family B | **200**; body omits Family A’s `{id}` | executed (AQPBT-10/11/12) |
+| `POST /api/v1/playdates/{id}/cancel` where `{id}` belongs to Family A, Bearer token for Family B | **4xx**; Family A row not `cancelled` | executed (AQPBT-10) |
+| `GET /api/v1/connections` as Family A after creating a child | **200**; circle names present; body omits new `{id}` | executed (AQPBT-14) |
+| `GET /api/v1/connections` as Family B (alt) | **200**; includes connected main family name; `/me` omits Family A child `{id}` | executed (AQPBT-14) |
+
+**Not yet tested** (authorization):
+
+- Error JSON shape for cross-family or unauthenticated `DELETE /api/v1/children/{id}` (only status codes recorded).
+- `DELETE` with expired or invalid Bearer (401 vs 403).
+- Cross-family or anonymous `DELETE` on other write routes (playdates, availability exceptions, communities, etc.).
+- Whether Family B receives **403** instead of **404** for another family’s child id on a future API version.
+
 ## Not yet tested
 
 - Pagination, cursors, or max list sizes for `GET /api/v1/connections`, `/playdates`, `/matches`, `/events`, or `/communities`.

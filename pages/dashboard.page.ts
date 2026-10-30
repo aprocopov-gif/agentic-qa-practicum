@@ -1,4 +1,5 @@
 import { type Locator, type Page } from '@playwright/test';
+import { buildChildDashboardRowText } from '../test-data/factories/child.factory';
 import { AppRoute } from '../test-data/routes';
 import { AddChildFormComponent } from './components/add-child-form.component';
 import { AvatarPickerComponent } from './components/avatar-picker.component';
@@ -25,6 +26,7 @@ export class DashboardPage {
   readonly upcomingPlaydatesWidgetTitle: Locator;
   readonly upcomingPlaydatesWidget: Locator;
   readonly upcomingPlaydatesEmptyCopy: Locator;
+  readonly myKidsCount: Locator;
 
   constructor(private readonly page: Page) {
     this.header = new HeaderComponent(page);
@@ -50,6 +52,10 @@ export class DashboardPage {
     this.upcomingPlaydatesEmptyCopy = this.upcomingPlaydatesWidget.locator(
       ':text-is("No playdates yet. Find a match and send the first request.")',
     );
+    this.myKidsCount = page
+      .getByText('My Kids', { exact: true })
+      .locator('..')
+      .getByText(/^\d+$/, { exact: true });
   }
 
   /** Opens the dashboard. */
@@ -65,6 +71,12 @@ export class DashboardPage {
   /** Opens the avatar picker for the child card that shows this label. */
   async openChangeAvatar(childLabel: string): Promise<void> {
     await this.childCard(childLabel).getByRole('button', { name: 'Change avatar', exact: true }).click();
+  }
+
+  /** Locator for the child summary line (`{firstName}, {age} · …`) on the family card. */
+  childSummaryLine(firstName: string, birthYear: number, birthMonth: number): Locator {
+    const rowText = buildChildDashboardRowText(firstName, birthYear, birthMonth);
+    return this.page.getByText(rowText, { exact: false });
   }
 
   /** Removes a child from the family list by first name. */

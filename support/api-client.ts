@@ -10,6 +10,8 @@ const AVAILABILITY_EXCEPTIONS_PATH = '/api/v1/availability/exceptions';
 const CHILDREN_PATH = '/api/v1/children';
 const FAMILIES_PATH = '/api/v1/families';
 const PLAYDATES_PATH = '/api/v1/playdates';
+const MATCHES_PATH = '/api/v1/matches';
+const CONNECTIONS_PATH = '/api/v1/connections';
 
 export interface MeChild {
   id?: string;
@@ -27,6 +29,49 @@ export interface MeFamily {
 
 export interface MeResponse {
   family: MeFamily | null;
+}
+
+export interface AvailabilityRule {
+  id?: string;
+  childId?: string;
+  weekday: number;
+  startMin: number;
+  endMin: number;
+  hosting?: string;
+  noticeHours?: number;
+}
+
+export interface AvailabilityResponse {
+  rules: AvailabilityRule[];
+  exceptions: unknown[];
+}
+
+export interface ConnectionRow {
+  id?: string;
+  family?: { id: string; name: string };
+  children?: unknown[];
+  status?: string;
+  blockedByMe?: boolean;
+}
+
+export interface PlaydateListItem {
+  id: string;
+  status: string;
+  startsAt?: string;
+  locationText: string | null;
+  notes?: string | null;
+  children?: Array<{ firstName: string }>;
+  googleCalendarUrl?: string | null;
+  icsUrl?: string | null;
+}
+
+export interface MatchListItem {
+  date: string;
+  startMin: number;
+  endMin: number;
+  startsAt: string;
+  endsAt: string;
+  family?: { name?: string };
 }
 
 export interface UpsertFamilyPayload {
@@ -145,6 +190,59 @@ export async function getMe(apiContext: APIRequestContext): Promise<MeResponse> 
     throw new Error(`GET /api/v1/me failed: ${await readErrorMessage(response)}`);
   }
   return (await response.json()) as MeResponse;
+}
+
+/** GET `/api/v1/availability` parsed body. */
+export async function getAvailability(apiContext: APIRequestContext): Promise<AvailabilityResponse> {
+  const response = await apiContext.get('/api/v1/availability');
+  if (!response.ok()) {
+    throw new Error(`GET /api/v1/availability failed: ${await readErrorMessage(response)}`);
+  }
+  return (await response.json()) as AvailabilityResponse;
+}
+
+/** GET `/api/v1/playdates` parsed body. */
+export async function getPlaydates(apiContext: APIRequestContext): Promise<PlaydateListItem[]> {
+  const response = await apiContext.get(PLAYDATES_PATH);
+  if (!response.ok()) {
+    throw new Error(`GET ${PLAYDATES_PATH} failed: ${await readErrorMessage(response)}`);
+  }
+  return (await response.json()) as PlaydateListItem[];
+}
+
+/** GET `/api/v1/matches` parsed body. */
+export async function getMatches(apiContext: APIRequestContext): Promise<MatchListItem[]> {
+  const response = await apiContext.get(MATCHES_PATH);
+  if (!response.ok()) {
+    throw new Error(`GET ${MATCHES_PATH} failed: ${await readErrorMessage(response)}`);
+  }
+  return (await response.json()) as MatchListItem[];
+}
+
+/** GET `/api/v1/connections` parsed body. */
+export async function getConnections(apiContext: APIRequestContext): Promise<ConnectionRow[]> {
+  const response = await apiContext.get(CONNECTIONS_PATH);
+  if (!response.ok()) {
+    throw new Error(`GET ${CONNECTIONS_PATH} failed: ${await readErrorMessage(response)}`);
+  }
+  return (await response.json()) as ConnectionRow[];
+}
+
+/** Finds a playdate list row whose location or notes include the token. */
+export function findPlaydateByLocationToken(
+  list: PlaydateListItem[],
+  token: string,
+): PlaydateListItem | undefined {
+  return list.find(
+    (item) => item.locationText?.includes(token) || item.notes?.includes(token),
+  );
+}
+
+/** Connected circle family display names from GET `/api/v1/connections`. */
+export function connectionFamilyNames(connections: ConnectionRow[]): string[] {
+  return connections
+    .map((row) => row.family?.name)
+    .filter((name): name is string => typeof name === 'string');
 }
 
 /** Creates a family when the parent has none (POST `/api/v1/families`). */
